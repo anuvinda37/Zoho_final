@@ -320,11 +320,11 @@
                 <hr>
                 {% endif %}
                 {% if allmodules.retainer_invoice == 1  %}
-                <a href="" class="d-flex align-items-center gap-2 dropdown-item">
+                <a href="{% url 'retainer_list' %}" class="d-flex align-items-center gap-2 dropdown-item">
                   
                   <div class="d-flex">
                     <p class="mb-0 fs-3">Retainer Invoice</p>
-                    <a href=""><i class="fa fa-plus text-white" ></i></a>
+                    <a href="{% url 'new_retainer' %}"><i class="fa fa-plus text-white" ></i></a>
                   </div>
                   
                 </a>

@@ -337,8 +337,10 @@ urlpatterns = [
     path('godownmodal_unit_edit/<int:pk>',views.godownmodal_unit_edit,name='godownmodal_unit_edit'),
     path('Add_Account_Edit/<int:pk>',views.Add_Account_Edit,name='Add_Account_Edit'),
     path('delete_godown/<int:pk>',views.delete_godown,name='delete_godown'),
-    
+    path('retainer_list',views.retainer_list,name='retainer_list'),
+    path('new_retainer',views.new_retainer,name='new_retainer'),
     re_path(r'^static/(?P<path>.*)$', serve,{'document_root': settings.STATIC_ROOT}),
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS)
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+

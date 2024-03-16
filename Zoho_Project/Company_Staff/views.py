@@ -61,6 +61,7 @@ from django.shortcuts import render, get_object_or_404
 from datetime import date as dt
 from django.db.models import Sum
 from django.utils.timezone import now
+
 # Create your views here.
 
 
@@ -13058,3 +13059,51 @@ def delete_godown(request,pk):
     godown.delete()
     messages.success(request,'Deleted Successfully')
     return redirect('list_godown')
+
+
+
+def retainer_list(request):
+    if 'login_id' in request.session:
+        login_id = request.session['login_id']
+        if 'login_id' not in request.session:
+            return redirect('/')
+        log_details= LoginDetails.objects.get(id=login_id)
+        if log_details.user_type == 'Staff':
+                dash_details = StaffDetails.objects.get(login_details=log_details)
+                item=Items.objects.filter(company=dash_details.company)
+                allmodules= ZohoModules.objects.get(company=dash_details.company,status='New')
+                content = {
+                        'details': dash_details,
+                        'item':item,
+                        'allmodules': allmodules,
+                }
+                return render(request,'zohomodules/retainer_invoice/retainer_list.html',content)
+        if log_details.user_type == 'Company':
+            dash_details = CompanyDetails.objects.get(login_details=log_details)
+            item=Items.objects.filter(company=dash_details)
+            allmodules= ZohoModules.objects.get(company=dash_details,status='New')
+            context = {
+                    'details': dash_details,
+                    'item': item,
+                    'allmodules': allmodules,
+            }
+        return render(request,'zohomodules/retainer_invoice/retainer_list.html',context)
+def new_retainer(request):                                                              
+    if 'login_id' in request.session:
+        login_id = request.session['login_id']
+        if 'login_id' not in request.session:
+            return redirect('/')
+    log_details= LoginDetails.objects.get(id=login_id)
+    if log_details.user_type == 'Staff':
+                dash_details = StaffDetails.objects.get(login_details=log_details)
+                item=Items.objects.filter(company=dash_details.company)
+                allmodules= ZohoModules.objects.get(company=dash_details.company,status='New')
+                units = Unit.objects.filter(company=dash_details.company)
+                accounts=Chart_of_Accounts.objects.filter(company=dash_details.company)
+                context = {
+                     'details': dash_details,
+                    'units': units,
+                    'allmodules': allmodules,
+                    'accounts':accounts
+                }
+                return render(request,'zohomodules/retainer_invoice/new_retainer.html',context)
