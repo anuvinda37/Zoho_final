@@ -13100,10 +13100,32 @@ def new_retainer(request):
                 allmodules= ZohoModules.objects.get(company=dash_details.company,status='New')
                 units = Unit.objects.filter(company=dash_details.company)
                 accounts=Chart_of_Accounts.objects.filter(company=dash_details.company)
+                customers = Customer.objects.all()
                 context = {
                      'details': dash_details,
                     'units': units,
                     'allmodules': allmodules,
-                    'accounts':accounts
+                    'accounts':accounts,
+                    'customer1': customers
                 }
                 return render(request,'zohomodules/retainer_invoice/new_retainer.html',context)
+
+@login_required(login_url='login')
+def get_customerdet(request):
+    company= company_details.objects.get(user = request.user)
+    name = request.POST.get('name')
+    customer_id = request.POST.get('id')
+    cust = Customer.objects.get(user=company.user_id,id=id)
+    email = cust.customer_email
+    print("Customer Email:", email) 
+    cust_id=id
+    cust_address=cust.billing_address
+    cust_place_supply=cust.place_of_supply
+    gstin = cust.GSTIN
+    gsttr = cust. GST_treatement
+    cstate = cust.place_of_supply.split("] ")[1:]
+    state = 'Not Specified' if cstate == "" else cstate
+    return JsonResponse({'customer_email' :email, 'gst_treatment':gsttr, 'gstin': gstin , 'state' : state,'cust_id':cust_id,'cust_place_supply':cust_place_supply,'cust_address':cust_address},safe=False)
+
+
+    
