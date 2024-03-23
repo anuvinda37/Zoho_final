@@ -13095,37 +13095,79 @@ def new_retainer(request):
             return redirect('/')
     log_details= LoginDetails.objects.get(id=login_id)
     if log_details.user_type == 'Staff':
-                dash_details = StaffDetails.objects.get(login_details=log_details)
-                item=Items.objects.filter(company=dash_details.company)
-                allmodules= ZohoModules.objects.get(company=dash_details.company,status='New')
-                units = Unit.objects.filter(company=dash_details.company)
-                accounts=Chart_of_Accounts.objects.filter(company=dash_details.company)
-                customers = Customer.objects.all()
-                context = {
-                     'details': dash_details,
-                    'units': units,
-                    'allmodules': allmodules,
-                    'accounts':accounts,
-                    'customer1': customers
-                }
-                return render(request,'zohomodules/retainer_invoice/new_retainer.html',context)
+        dash_details = StaffDetails.objects.get(login_details=log_details)
+        item = Items.objects.filter(company=dash_details.company)
+        allmodules = ZohoModules.objects.get(company=dash_details.company,status='New')
+        units = Unit.objects.filter(company=dash_details.company)
+        accounts = Chart_of_Accounts.objects.filter(company=dash_details.company)
+        customers = Customer.objects.all()
+        last_record = RetainerInvoice.objects.filter(logindetails=log_details).last()
 
-@login_required(login_url='login')
-def get_customerdet(request):
-    company= company_details.objects.get(user = request.user)
-    name = request.POST.get('name')
-    customer_id = request.POST.get('id')
-    cust = Customer.objects.get(user=company.user_id,id=id)
-    email = cust.customer_email
-    print("Customer Email:", email) 
-    cust_id=id
-    cust_address=cust.billing_address
-    cust_place_supply=cust.place_of_supply
-    gstin = cust.GSTIN
-    gsttr = cust. GST_treatement
-    cstate = cust.place_of_supply.split("] ")[1:]
-    state = 'Not Specified' if cstate == "" else cstate
-    return JsonResponse({'customer_email' :email, 'gst_treatment':gsttr, 'gstin': gstin , 'state' : state,'cust_id':cust_id,'cust_place_supply':cust_place_supply,'cust_address':cust_address},safe=False)
+        last_reference = retInvoiceReference.objects.filter(logindetails=request.user.id).last()
+
+        next_ret_number = ''  # Initialize next_ret_number with a default value
+        lastSalesNo = ''
+        if last_record == None:
+            reference = '01'
+            remaining_characters = ''
+        else:
+            lastSalesNo = last_record.retainer_invoice_number
+            last_two_numbers = int(lastSalesNo[-2:])+1
+            for i in range(len(lastSalesNo)-1,-1,-1):
+                if not lastSalesNo[i].isdigit():
+                    last_digit_index=i+1
+                    break
+            prefix=lastSalesNo[:last_digit_index]
+            number=int(lastSalesNo[last_digit_index:])
+            number+=1
+            enumber=str(number).zfill(3)
+            next_ret_number=f"{prefix}{enumber}"
+            last_two_numbers = int(lastSalesNo[-2:])+1
+            remaining_characters = lastSalesNo[:-2]  
+            if remaining_characters == '':
+                if last_two_numbers < 10:
+                    reference = '0'+str(last_two_numbers)
+                else:
+                    reference = str(last_two_numbers)
+            else:
+                if last_two_numbers < 10:
+                    reference = remaining_characters+'0'+str(last_two_numbers)
+                else:
+                    reference = remaining_characters+str(last_two_numbers)
+        if last_reference == None:
+            reford = '01'
+        else:
+            if last_reference.reference+1 < 10:
+                reford = '0'+ str(last_reference.reference+1)
+            else:
+                reford = str(last_reference.reference+1)
+
+        context = {
+            'details': dash_details,
+            'units': units,
+            'allmodules': allmodules,
+            'accounts': accounts,
+            'customer1': customers,
+            'reford': reford,
+            'reference': reference,
+            'remaining_characters': remaining_characters,
+            'next_ret_number': next_ret_number,  # Include next_ret_number in the context
+        }
+        return render(request, 'zohomodules/retainer_invoice/new_retainer.html', context)
 
 
-    
+def get_customer_details(request):
+    if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        customer_id = request.POST.get('customer_id')
+        customer = Customer.objects.get(pk=customer_id)
+        response_data = {
+            'customer_email': customer.customer_email,
+            'gst_treatment': customer.GST_treatement,
+            'gstin': customer.GST_number,
+            'customer_address': customer.billing_address,
+            # Include other fields you need
+        }
+        print(response_data)  # Debugging line
+        return JsonResponse(response_data)
+    else:
+        return JsonResponse({'error': 'Invalid request'})
