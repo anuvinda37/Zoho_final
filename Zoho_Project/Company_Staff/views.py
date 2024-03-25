@@ -13097,6 +13097,7 @@ def new_retainer(request):
     if log_details.user_type == 'Staff':
         dash_details = StaffDetails.objects.get(login_details=log_details)
         item = Items.objects.filter(company=dash_details.company)
+       
         allmodules = ZohoModules.objects.get(company=dash_details.company,status='New')
         units = Unit.objects.filter(company=dash_details.company)
         accounts = Chart_of_Accounts.objects.filter(company=dash_details.company)
@@ -13152,6 +13153,7 @@ def new_retainer(request):
             'reference': reference,
             'remaining_characters': remaining_characters,
             'next_ret_number': next_ret_number,  # Include next_ret_number in the context
+            'item':item,
         }
         return render(request, 'zohomodules/retainer_invoice/new_retainer.html', context)
 
@@ -13171,3 +13173,34 @@ def get_customer_details(request):
         return JsonResponse(response_data)
     else:
         return JsonResponse({'error': 'Invalid request'})
+@login_required(login_url='login')
+def itemdata_ri(request):
+    cur_user = request.user.id
+    user = User.objects.get(id=cur_user)
+    company = CompanyDetails.objects.get(user = user)
+    id = request.GET.get('id')
+
+    try:
+        item = Items.objects.get(id=id)
+        rate = item.selling_price
+        print(rate)
+        place=company.state
+        gst = item.intrastate_tax
+        igst = item. interstate_tax
+        desc=item.sales_description
+        stock=item.opening_stock
+        hsn=item.hsn_code
+
+        return JsonResponse({"status":" not",'desc':desc,'place':place,'rate':rate,'gst':gst,'igst':igst,
+                            'stock':stock,'hsn':hsn})
+    except Items.DoesNotExist:
+        rate = 0
+        place=''
+        gst = 0
+        igst = 0
+        desc=0
+        mail=''
+        stock=0
+        hsn=0
+        return JsonResponse({"status":" not",'desc':desc,'place':place,'rate':rate,'gst':gst,'igst':igst,
+                            'stock':stock,'hsn':hsn})

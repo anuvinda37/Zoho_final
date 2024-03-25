@@ -340,6 +340,7 @@ urlpatterns = [
     path('retainer_list',views.retainer_list,name='retainer_list'),
     path('new_retainer',views.new_retainer,name='new_retainer'),
     path('get_customer_details/', views.get_customer_details, name='get_customer_details'),
+     path('itemdata_ri', views.itemdata_ri, name='itemdata_ri'),
     re_path(r'^static/(?P<path>.*)$', serve,{'document_root': settings.STATIC_ROOT}),
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS)
