@@ -1,4 +1,5 @@
 #Zoho Final
+
 from django.shortcuts import render,redirect
 from Register_Login.models import *
 from Register_Login.views import logout
@@ -13173,34 +13174,34 @@ def get_customer_details(request):
         return JsonResponse(response_data)
     else:
         return JsonResponse({'error': 'Invalid request'})
-@login_required(login_url='login')
+
+from django.http import JsonResponse
+from .models import Items, CompanyDetails
+
 def itemdata_ri(request):
-    cur_user = request.user.id
-    user = User.objects.get(id=cur_user)
-    company = CompanyDetails.objects.get(user = user)
     id = request.GET.get('id')
 
     try:
         item = Items.objects.get(id=id)
         rate = item.selling_price
-        print(rate)
-        place=company.state
+        # Fetch company details associated with the item
+        company = item.company
+        place = company.state
         gst = item.intrastate_tax
-        igst = item. interstate_tax
-        desc=item.sales_description
-        stock=item.opening_stock
-        hsn=item.hsn_code
+        igst = item.interstate_tax
+        desc = item.sales_description
+        stock = item.opening_stock
+        hsn = item.hsn_code
 
-        return JsonResponse({"status":" not",'desc':desc,'place':place,'rate':rate,'gst':gst,'igst':igst,
-                            'stock':stock,'hsn':hsn})
+        return JsonResponse({
+            "status": "success",
+            "desc": desc,
+            "place": place,
+            "rate": rate,
+            "gst": gst,
+            "igst": igst,
+            "stock": stock,
+            "hsn": hsn
+        })
     except Items.DoesNotExist:
-        rate = 0
-        place=''
-        gst = 0
-        igst = 0
-        desc=0
-        mail=''
-        stock=0
-        hsn=0
-        return JsonResponse({"status":" not",'desc':desc,'place':place,'rate':rate,'gst':gst,'igst':igst,
-                            'stock':stock,'hsn':hsn})
+        return JsonResponse({"status": "error", "message": "Item not found"})

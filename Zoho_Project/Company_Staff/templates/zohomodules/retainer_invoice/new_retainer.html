@@ -477,7 +477,65 @@ li{
         
                 </div>
                 <div class="col-md-2"></div>
-        
+                <br><br>
+
+      <div class="row  border-bottom pb-5">
+        <div class="col-sm-5 d-flex flex-column mt-auto">
+          <label for="">Customer Notes</label>
+          <textarea cols="8" rows="13" name="customer_notes" id="floatingTextarea"></textarea>
+
+        </div>
+        <div class="col-sm-6 mt-4">
+          <table class="table text-white" style="background-color: rgba(58, 57, 57, 0.8);">
+            <tr>
+              <td>Total</td>
+              <td></td>
+              <td><input type="number" name="total" id="total-amount"
+                  class="form-control bg-transparent border-0 text-right text-white" style="text-align: right;"
+                  readonly></td>
+            </tr>
+            <tr>
+              <td>Paid</td>
+              <td></td>
+              <td><input type="number" name="paid" id="paid"
+                  class="form-control bg-transparent border-0 text-right subtotal text-white" onchange="show_bal()"
+                  style="text-align: right;" value="0">
+                <label for="" id="pay-warning" style="display: none;text-align: right;" class="text-warning"></label>
+              </td>
+            </tr>
+            <tr>
+              <td>Balance</td>
+              <td></td>
+              <td><input type="number" name="balance" id="balance"
+                  class="form-control bg-transparent border-0 text-right text-white" style="text-align: right;"
+                  value="0" readonly></td>
+            </tr>
+          </table>
+
+
+
+
+        </div>
+      </div>
+
+
+      <div class="row border-bottom">
+        <div class="col-md-8 d-flex flex-column text-white mb-5">
+          <label for="">Terms & Conditions</label>
+          <textarea cols="20" rows="7" name="terms" id="floatingTextarea"></textarea>
+
+        </div>
+
+      </div>
+
+
+      <div class="submit row mt-5 mb-3">
+        <button class="btn mt-2" type="submit" name="action" value="draft"
+          style="width: 150px;margin-right: 1vh; background-color: chocolate;" onclick="savedraft()">Draft</button>
+        <button class="btn mt-2" type="submit" name="action" value="send"
+          style="width: 150px;margin-right: 1vh; background-color: chocolate;" onclick="savesend()">Save</button>
+        <button class="btn mt-2" style="width: 150px; background-color: chocolate;" type="reset">Cancel</button><br><br>
+      </div>
               </div>
             </form>
             </div>
@@ -519,29 +577,28 @@ li{
           
                 <script>
                   function itemfunction(id_str) {
-                    id = id_str.split("item")[1]
-                
-                
-                    select = $(`#item${id}`).val();
-                    //customer = $('#customer_sel').val();
-                    // Add console.log() statement here
-                    console.log("Selected item ID: " + select);
+                        console.log("itemfunction called"); // Add this line for debugging
+                        var id = id_str.split("item")[1];
+                        var select = $(`#item${id}`).val();
+                        console.log("Selected item ID: " + select);
 
-                    $.ajax({
-                      type: "GET",
-                      url: "{% url 'itemdata_ri' %}",
-                      data: {
-                        id: select,
-                        //cust: customer
-                      },
-                      success: function (response) {
-                        console.log(response);
-                        data = response.rate
-                        document.getElementById(`rate${id}`).value = data
-                
-                      }
-                    });
-                  }
+                        $.ajax({
+                            type: "GET",
+                            url: "{% url 'itemdata_ri' %}",
+                            data: { id: select },
+                            success: function(response) {
+                                console.log(response);
+                                var rate = response.rate;
+                                console.log("Retrieved rate: " + rate);
+                                // Update rate field
+                                $("#rate" + id).val(rate);
+                            },
+                            error: function(xhr, status, error) {
+                                console.error("Error fetching rate:", error);
+                            }
+                        });
+                    }
+
                 
                 </script>
           
@@ -604,7 +661,114 @@ li{
           
             // Call the function to update index numbers initially
             //updateIndexNumbers();
-            
+            function calculateAmount(rowId) {
+                var quantity = parseFloat(document.getElementById('qty' + rowId).value);
+                var rate = parseFloat(document.getElementById('rate' + rowId).value);
+                var amount = quantity * rate;
+
+                document.getElementById('amount' + rowId).value = amount.toFixed(2);
+              }
+              {% comment %} 
+  $('#add-another-line').click(function () {
+    rowCount++; // Increment row counter
+    console.log()
+    var newRow = `
+      <tr id="row${rowCount}">
+        <td>
+          <select class="form-control border-0 bg-transparent text-white item_select itm" name="item[]" id="item${rowCount}" onchange="itemfunction(this.id)">
+            <option value="" selected hidden>Select Item</option>
+              {% for i in itm %}
+              <option class="text-black .name" value="{{i.id}}">{{ i.Name}} </option>
+              {% endfor %}
+          </select>
+        </td>
+        <td><input type="text" class="form-control bg-light text-light bg-transparent border-0" name="description[]" id="description${rowCount}"/></td> 
+        <td><input type="number" name="quantity[]" class="qty form-control bg-transparent text-white border-0 text-right" style="border: none;width: 100px;" id="qty${rowCount}" onchange="calculateAmount(${rowCount})"></td>
+        <td><input type="number" class="rate form-control bg-transparent border-0 bg-light text-light border-0" name="rate[]" style="width: 150px;" step="0.01" required id="rate${rowCount}" onchange="calculateAmount(${rowCount})" readonly/></td>
+        <td><input type="number" class="amount form-control bg-light text-light bg-transparent border-0" name="amount[]" step="0.01" style="width: 150px;" id="amount${rowCount}" readonly/></td>
+        <td class="text-center" style="display: grid;">
+          <a href="#" class="delete-row btn btn-transparent btn-outline-danger btn-sm rounded-circle" style="width: 30px;">
+            <i class="fas fa-times"></i>
+          </a>
+          <a href="#" class="clone-row btn btn-transparent btn-outline-primary btn-sm rounded-circle" style="width: 30px;"> 
+            <i class="fas fa-clone"></i>
+          </a>
+          </td>
+      </tr>`;
+    $('#retainer-table tbody').append(newRow);
+        
+            // Initialize Selectize for the newly added item dropdown
+            initializeSelectize(`#item${RowCount}`);
+        });
+
+    // Add event listeners to the quantity and rate inputs in the newly added row
+    $('#qty' + rowCount).on('input', handleInput);
+    $('#rate' + rowCount).on('input', handleInput);
+  });
+   {% endcomment %}
+
+
+  // Add event listeners to the quantity and rate inputs
+  var quantityInputs = document.querySelectorAll('[id^="qty"]');
+  var rateInputs = document.querySelectorAll('[id^="rate"]');
+
+  for (var i = 0; i < quantityInputs.length; i++) {
+    quantityInputs[i].addEventListener('input', handleInput);
+    rateInputs[i].addEventListener('input', handleInput);
+  }
+
+  function handleInput(event) {
+    var rowId = event.target.id.slice(-1);
+    calculateAmount(rowId);
+    calculateTotalAmount();
+  }
+
+  function calculateTotalAmount() {
+    var total = 0;
+
+    $('.amount').each(function () {
+      var amount = parseFloat($(this).val());
+      if (!isNaN(amount)) {
+        total += amount;
+        console.log(total);
+      }
+    });
+
+    document.getElementById('total-amount').value = total.toFixed(2);
+    $('#balance').val(total.toFixed(2));
+
+  }
+
+
+  $(document).ready(function () {
+    // Add event listeners to the 'Paid Off' and 'Total Amount' fields
+    $('#paid').on('input', show_bal);
+    $('#total-amount').on('input', show_bal);
+
+    // Function to calculate and display the balance
+    function show_bal() {
+      var paid_off = parseFloat($('#paid').val());
+      var total_amount = parseFloat($('#total-amount').val());
+      var bal = total_amount - paid_off;
+
+      // Ensure balance is shown as a positive number
+      if (bal < 0) {
+        bal = 0;
+        document.getElementById('pay-warning').style.display = ""
+        $('#pay-warning').text("Paid amount cannot be greater than the total*.");
+      }
+      else {
+        document.getElementById('pay-warning').style.display = "none"
+
+      }
+
+      $('#balance').val(bal.toFixed(2));
+    }
+
+    // Call the show_bal() function initially to display the initial balance
+    show_bal();
+  });
+
           </script>
           
 
