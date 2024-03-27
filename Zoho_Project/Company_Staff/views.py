@@ -13143,6 +13143,8 @@ def new_retainer(request):
                 reford = '0'+ str(last_reference.reference+1)
             else:
                 reford = str(last_reference.reference+1)
+        
+        banks = Banking.objects.filter(company=dash_details.company).values_list('bnk_name', flat=True)
 
         context = {
             'details': dash_details,
@@ -13155,6 +13157,7 @@ def new_retainer(request):
             'remaining_characters': remaining_characters,
             'next_ret_number': next_ret_number,  # Include next_ret_number in the context
             'item':item,
+            'banks': banks,
         }
         return render(request, 'zohomodules/retainer_invoice/new_retainer.html', context)
 
@@ -13205,3 +13208,121 @@ def itemdata_ri(request):
         })
     except Items.DoesNotExist:
         return JsonResponse({"status": "error", "message": "Item not found"})
+def get_bank_details(request):
+    bank_name = request.GET.get('bank_name')
+    bank = Banking.objects.get(bnk_name=bank_name)
+    data = {'bnk_acno': bank.bnk_acno}
+    return JsonResponse(data)
+
+
+def create_invoice_send(request):
+    if request.method == 'POST':
+        print(request.POST)  # Print POST data for debugging
+        user = request.user
+        if 'customer_id' in request.POST:
+            select = request.POST['customer_id']
+            if select:
+                try:
+                    customer_name = Customer.objects.get(id=select)
+                except ObjectDoesNotExist:
+                    # Handle the case where the customer does not exist
+                    # You can redirect the user to an error page or return an error response
+                    return HttpResponse("Error: Customer with ID {} does not exist.".format(select))
+            else:
+                # Handle the case where 'customer_id' is empty
+                return HttpResponse("Error: 'customer_id' is empty in the POST data.")
+        else:
+            # Handle the case where 'customer_id' is missing in the POST data
+            return HttpResponse("Error: 'customer_id' is not present in the POST data.")
+        
+        customer_name11=customer_name.customerName
+        customer_name1=customer_name11.upper()
+        customer_mailid=request.POST['cx_mail']
+        customer_placesupply=request.POST['cus_place1']
+        retainer_invoice_number=request.POST['retainer-invoice-number']
+        references=request.POST['references']
+        last_reference = retInvoiceReference.objects.filter(user = request.user.id).last()
+        if last_reference == None:
+            ref = retInvoiceReference(reference = int(references),user = user)
+            ref.save()
+        else:
+            last_reference.reference = int(references)
+            last_reference.save()
+        retainer_invoice_date = request.POST.get('invoicedate')    
+        total_amount=request.POST.get('total')
+        bal_amount=request.POST['balance']
+        customer_notes=request.POST['customer_notes']
+        terms_and_conditions=request.POST['terms']
+        pay_opt1=request.POST['pay_method']
+        paid = request.POST['paid']
+        tot_in_string = str(total_amount)
+
+        acc_no=request.POST['acc_no']
+        cheque_no=request.POST['chq_no']
+        upi_id=request.POST['upi_id']
+
+
+        if pay_opt1 != '':
+            if pay_opt1 == 'cash':
+                bankid="null"
+            elif pay_opt1 == 'upi':
+                bankid="null"
+            elif pay_opt1 == 'cheque':
+                bankid="null"
+                bank_name1=0
+            else:
+                bankid=pay_opt1.split(" ")[0]
+                bank_id=Bankcreation.objects.filter(name=bankid,ac_no=acc_no)
+                for i in bank_id:
+                    bankname=i.name
+                    b_id=i.id
+                    bank=Bankcreation.objects.get(id=b_id)
+
+        retainer_invoice=RetainerInvoice(
+        user=user,customer_name=customer_name,customer_name1=customer_name1,customer_mailid=customer_mailid,customer_placesupply=customer_placesupply,retainer_invoice_number=retainer_invoice_number,refrences=references,retainer_invoice_date=retainer_invoice_date,
+        total_amount=total_amount,balance=bal_amount,customer_notes=customer_notes,terms_and_conditions=terms_and_conditions,is_draft=False,is_sent=True,advance=paid)
+        retainer_invoice.save()
+
+        if pay_opt1 != '':
+            if pay_opt1 == 'cash':
+                ret_payment=retainer_payment_details(user=user,retainer=retainer_invoice,payment_opt=pay_opt1,acc_no=acc_no,cheque_no=cheque_no,upi_id=upi_id)
+                ret_payment.save()
+            elif pay_opt1 == 'cheque':
+                ret_payment=retainer_payment_details(user=user,retainer=retainer_invoice,payment_opt=pay_opt1,acc_no=acc_no,cheque_no=cheque_no,upi_id=upi_id)
+                ret_payment.save()
+            elif pay_opt1 == 'upi':
+                ret_payment=retainer_payment_details(user=user,retainer=retainer_invoice,payment_opt=pay_opt1,acc_no=acc_no,cheque_no=cheque_no,upi_id=upi_id)
+                ret_payment.save()
+            else:
+                ret_payment=retainer_payment_details(user=user,retainer=retainer_invoice,payment_opt=bankname,acc_no=acc_no,bank=bank,cheque_no=cheque_no,upi_id=upi_id)
+                ret_payment.save()
+
+        itemname =[]
+        itemid = []
+        description = request.POST.getlist('description[]')
+        amount =request.POST.getlist('amount[]')
+        itm=request.POST.getlist('item[]')
+        for i in itm:
+            w = AddItem.objects.get(id = i)
+            x = w.Name
+            y = w
+            itemname.append(x)
+            itemid.append(y)
+        qty=request.POST.getlist('quantity[]')
+        rate=request.POST.getlist('rate[]')
+        if len(description)==len(amount)==len(itemname)==len(qty)==len(rate)==len(itemid):
+            mapped = zip(description,amount,itemname,qty,rate,itemid)
+            mapped=list(mapped)
+            for ele in mapped:
+                created = Retaineritems.objects.create(description=ele[0],amount=ele[1],itemname=ele[2],quantity=ele[3],rate=ele[4] ,item=ele[5],retainer=retainer_invoice)
+        else:
+            pass
+        # return redirect('invoice_view',pk=retainer_invoice.id)
+        cust_email = customer.objects.get(
+            user=user, customerName=customer_name1).customerEmail
+        print(cust_email)
+        subject = 'Retainer Invoice'
+        message = 'Dear Customer,\n Your Retainer Invoice has been Saved for a total amount of: ' + tot_in_string
+        recipient = cust_email
+        send_mail(subject, message, settings.EMAIL_HOST_USER, [recipient])
+        return redirect('retainer_list')

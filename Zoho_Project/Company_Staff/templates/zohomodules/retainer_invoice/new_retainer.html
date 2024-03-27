@@ -227,7 +227,7 @@ li{
               <p style="color: chocolate;">{{m}}</p>
               {% endfor %}
       
-              <form action="" method="POST" id="add" style="padding-left: 20px;">
+              <form action="" id="home" method="post" enctype="multipart/form-data" style="padding-left: 20px;">
                 {% csrf_token%}
                 <br>  
                 <h3 class="mb-3 text-white mt-4" style="font-size: 2rem;"></h3>
@@ -369,8 +369,8 @@ li{
                       <option value="cash">Cash</option>
                       <option value="cheque">Cheque</option>
                       <option value="upi">UPI</option>
-                      {% for item in bank %}
-                      <option value="{{item.name}}">{{item.name}}</option>
+                      {% for bank in banks %}
+                          <option value="{{ bank }}">{{ bank }}</option>
                       {% endfor %}
                     </select>
                   </div>
@@ -401,11 +401,11 @@ li{
           
                 <div class="row mt-2" id="bnkdiv" style="display: none;">
                   <div class="col-md-3">
-                    <label for="date2">Bank Account</label>
+                    <label for="date2">Bank Account Number</label>
                   </div>
           
                   <div class="col-md-6">
-                    <input type="text" class="form-control text-black" name="acc_no" id="bnk_id" readonly>
+                    <input type="text" class="form-control text-white" name="acc_no" id="bnk_id" readonly>
                   </div>
                 </div>
               </div>        
@@ -771,5 +771,48 @@ li{
 
           </script>
           
+          <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+          <script type="text/javascript">
+            $(document).ready(function() {
+              $('#pay_method').change(function() {
+                var selectedOption = $(this).val();
+                if (selectedOption === 'cheque') {
+                  $('#chequediv').show();
+                  $('#upidiv').hide();
+                  $('#bnkdiv').hide();
+                } else if (selectedOption === 'upi') {
+                  $('#chequediv').hide();
+                  $('#upidiv').show();
+                  $('#bnkdiv').hide();
+                } else if (selectedOption === 'cash') {
+                  $('#chequediv').hide();
+                  $('#upidiv').hide();
+                  $('#bnkdiv').hide();
+                } else {
+                  $('#chequediv').hide();
+                  $('#upidiv').hide();
+                  $('#bnkdiv').show();
+                  var selectedBank = $("#pay_method option:selected").text();
+                  $.ajax({
+                    url: "{% url 'get_bank_details' %}",
+                    type: 'GET',
+                    data: {
+                      'bank_name': selectedBank
+                    },
+                    success: function(data) {
+                      $('#bnk_id').val(data.bnk_acno);
+                    }
+                  });
+                }
+              });
+            });
 
+            function savesend() {
+              var frm = document.getElementById("home");
+              frm.action = ("{% url 'create_invoice_send' %}")
+
+            }
+
+          </script>
+          
 {% endblock %}

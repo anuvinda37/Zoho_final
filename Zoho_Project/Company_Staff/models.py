@@ -842,6 +842,7 @@ class Retaineritems(models.Model):
     description=models.TextField()
     amount=models.CharField(max_length=100)
     itemname=models.CharField(max_length=100,null=True)
+    hsn=models.IntegerField(null=True)
     quantity=models.IntegerField(null=True)
     rate=models.IntegerField(null=True)
     item=models.ForeignKey(Items,on_delete=models.CASCADE,null=True)
