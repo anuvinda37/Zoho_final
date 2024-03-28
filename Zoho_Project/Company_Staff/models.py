@@ -818,6 +818,7 @@ class GodownComments(models.Model):
     godown = models.ForeignKey(Godown, on_delete=models.CASCADE,null=True,blank=True)
     comment = models.CharField(max_length = 250)
 class RetainerInvoice(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, default=None)
     company = models.ForeignKey(CompanyDetails, on_delete=models.CASCADE,null=True,blank=True)
     logindetails = models.ForeignKey(LoginDetails, on_delete=models.CASCADE,null=True,blank=True)
     customer_name=models.ForeignKey(Customer,on_delete=models.CASCADE)
@@ -846,7 +847,18 @@ class Retaineritems(models.Model):
     quantity=models.IntegerField(null=True)
     rate=models.IntegerField(null=True)
     item=models.ForeignKey(Items,on_delete=models.CASCADE,null=True)
+
+
 class retInvoiceReference(models.Model):
     reference = models.BigIntegerField()
-    company = models.ForeignKey(CompanyDetails, on_delete=models.CASCADE,null=True,blank=True)
-    logindetails = models.ForeignKey(LoginDetails, on_delete=models.CASCADE,null=True,blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    company = models.ForeignKey(CompanyDetails, on_delete=models.CASCADE, null=True, blank=True)
+    logindetails = models.ForeignKey(LoginDetails, on_delete=models.CASCADE, null=True, blank=True)
+class retainer_payment_details(models.Model):
+    user = models.ForeignKey(User,on_delete=models.CASCADE,null=True,blank=True)
+    retainer=models.ForeignKey(RetainerInvoice,on_delete=models.CASCADE,null=True,blank=True)
+    payment_opt=models.CharField(max_length=100,null=True,blank=True)
+    acc_no=models.CharField(max_length=100,null=True,blank=True)
+    upi_id=models.CharField(max_length=100,null=True,blank=True)
+    cheque_no=models.CharField(max_length=100,null=True,blank=True)
+    bank = models.ForeignKey(Banking,on_delete=models.SET_NULL,null=True,blank=True)

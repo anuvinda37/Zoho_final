@@ -62,7 +62,7 @@ from django.shortcuts import render, get_object_or_404
 from datetime import date as dt
 from django.db.models import Sum
 from django.utils.timezone import now
-
+from django.contrib.auth.models import User
 # Create your views here.
 
 
@@ -13073,10 +13073,13 @@ def retainer_list(request):
                 dash_details = StaffDetails.objects.get(login_details=log_details)
                 item=Items.objects.filter(company=dash_details.company)
                 allmodules= ZohoModules.objects.get(company=dash_details.company,status='New')
+                invoices=RetainerInvoice.objects.filter(user=request.user.id).order_by('-id')
                 content = {
                         'details': dash_details,
                         'item':item,
                         'allmodules': allmodules,
+                        'invoices':invoices,
+                        
                 }
                 return render(request,'zohomodules/retainer_invoice/retainer_list.html',content)
         if log_details.user_type == 'Company':
@@ -13180,6 +13183,7 @@ def get_customer_details(request):
 
 from django.http import JsonResponse
 from .models import Items, CompanyDetails
+from .models import RetainerInvoice, retInvoiceReference, retainer_payment_details
 
 def itemdata_ri(request):
     id = request.GET.get('id')
@@ -13215,26 +13219,12 @@ def get_bank_details(request):
     return JsonResponse(data)
 
 
-def create_invoice_send(request):
-    if request.method == 'POST':
-        print(request.POST)  # Print POST data for debugging
-        user = request.user
-        if 'customer_id' in request.POST:
-            select = request.POST['customer_id']
-            if select:
-                try:
-                    customer_name = Customer.objects.get(id=select)
-                except ObjectDoesNotExist:
-                    # Handle the case where the customer does not exist
-                    # You can redirect the user to an error page or return an error response
-                    return HttpResponse("Error: Customer with ID {} does not exist.".format(select))
-            else:
-                # Handle the case where 'customer_id' is empty
-                return HttpResponse("Error: 'customer_id' is empty in the POST data.")
-        else:
-            # Handle the case where 'customer_id' is missing in the POST data
-            return HttpResponse("Error: 'customer_id' is not present in the POST data.")
-        
+def create_invoice_draft(request):
+    
+    if request.method=='POST':
+        user=request.user
+        select=request.POST['customer_id']
+        customer_name=customer.objects.get(id=select)
         customer_name11=customer_name.customerName
         customer_name1=customer_name11.upper()
         customer_mailid=request.POST['cx_mail']
@@ -13248,20 +13238,16 @@ def create_invoice_send(request):
         else:
             last_reference.reference = int(references)
             last_reference.save()
-        retainer_invoice_date = request.POST.get('invoicedate')    
+        retainer_invoice_date=request.POST['invoicedate']
         total_amount=request.POST.get('total')
         bal_amount=request.POST['balance']
         customer_notes=request.POST['customer_notes']
         terms_and_conditions=request.POST['terms']
         pay_opt1=request.POST['pay_method']
+        acc_no = request.POST.get('acc_no', '')
+        cheque_no = request.POST.get('chq_no', '')
+        upi_id = request.POST.get('upi_id', '')
         paid = request.POST['paid']
-        tot_in_string = str(total_amount)
-
-        acc_no=request.POST['acc_no']
-        cheque_no=request.POST['chq_no']
-        upi_id=request.POST['upi_id']
-
-
         if pay_opt1 != '':
             if pay_opt1 == 'cash':
                 bankid="null"
@@ -13269,7 +13255,6 @@ def create_invoice_send(request):
                 bankid="null"
             elif pay_opt1 == 'cheque':
                 bankid="null"
-                bank_name1=0
             else:
                 bankid=pay_opt1.split(" ")[0]
                 bank_id=Bankcreation.objects.filter(name=bankid,ac_no=acc_no)
@@ -13277,10 +13262,10 @@ def create_invoice_send(request):
                     bankname=i.name
                     b_id=i.id
                     bank=Bankcreation.objects.get(id=b_id)
-
+       
         retainer_invoice=RetainerInvoice(
-        user=user,customer_name=customer_name,customer_name1=customer_name1,customer_mailid=customer_mailid,customer_placesupply=customer_placesupply,retainer_invoice_number=retainer_invoice_number,refrences=references,retainer_invoice_date=retainer_invoice_date,
-        total_amount=total_amount,balance=bal_amount,customer_notes=customer_notes,terms_and_conditions=terms_and_conditions,is_draft=False,is_sent=True,advance=paid)
+            user=user,customer_name=customer_name,customer_name1=customer_name1,customer_mailid=customer_mailid,customer_placesupply=customer_placesupply,retainer_invoice_number=retainer_invoice_number,refrences=references,retainer_invoice_date=retainer_invoice_date,total_amount=total_amount,balance=bal_amount,customer_notes=customer_notes,terms_and_conditions=terms_and_conditions,advance=paid)
+    
         retainer_invoice.save()
 
         if pay_opt1 != '':
@@ -13296,9 +13281,8 @@ def create_invoice_send(request):
             else:
                 ret_payment=retainer_payment_details(user=user,retainer=retainer_invoice,payment_opt=bankname,acc_no=acc_no,bank=bank,cheque_no=cheque_no,upi_id=upi_id)
                 ret_payment.save()
-
         itemname =[]
-        itemid = []
+        itemid =[]
         description = request.POST.getlist('description[]')
         amount =request.POST.getlist('amount[]')
         itm=request.POST.getlist('item[]')
@@ -13308,6 +13292,7 @@ def create_invoice_send(request):
             y = w
             itemname.append(x)
             itemid.append(y)
+            
         qty=request.POST.getlist('quantity[]')
         rate=request.POST.getlist('rate[]')
         if len(description)==len(amount)==len(itemname)==len(qty)==len(rate)==len(itemid):
@@ -13317,12 +13302,58 @@ def create_invoice_send(request):
                 created = Retaineritems.objects.create(description=ele[0],amount=ele[1],itemname=ele[2],quantity=ele[3],rate=ele[4] ,item=ele[5],retainer=retainer_invoice)
         else:
             pass
-        # return redirect('invoice_view',pk=retainer_invoice.id)
-        cust_email = customer.objects.get(
-            user=user, customerName=customer_name1).customerEmail
-        print(cust_email)
-        subject = 'Retainer Invoice'
-        message = 'Dear Customer,\n Your Retainer Invoice has been Saved for a total amount of: ' + tot_in_string
-        recipient = cust_email
-        send_mail(subject, message, settings.EMAIL_HOST_USER, [recipient])
+
         return redirect('retainer_list')
+from django.shortcuts import redirect
+
+def create_invoice_send(request):
+    if request.method == 'POST':
+        # Extract data from the request
+        customer_id = request.POST.get('customer_id')
+        customer_mailid = request.POST.get('cx_mail')
+        retainer_invoice_number = request.POST.get('retainer-invoice-number')
+        references = request.POST.get('references')
+        retainer_invoice_date = request.POST.get('invoicedate')
+        total_amount = request.POST.get('total')
+        bal_amount = request.POST.get('balance')
+        customer_notes = request.POST.get('customer_notes')
+        terms_and_conditions = request.POST.get('terms')
+        paid = request.POST.get('paid')
+        pay_method = request.POST.get('pay_method')
+        acc_no = request.POST.get('acc_no', '')
+        cheque_no = request.POST.get('chq_no', '')
+        upi_id = request.POST.get('upi_id', '')
+
+        # Create a new instance of RetainerInvoice
+        retainer_invoice = RetainerInvoice(
+            customer_name_id=customer_id,  # Assuming customer_name is a ForeignKey
+            customer_mailid=customer_mailid,
+            retainer_invoice_number=retainer_invoice_number,
+            refrences=references,
+            retainer_invoice_date=retainer_invoice_date,
+            total_amount=total_amount,
+            balance=bal_amount,
+            customer_notes=customer_notes,
+            terms_and_conditions=terms_and_conditions,
+            advance=paid
+        )
+
+        # Save the RetainerInvoice instance
+        retainer_invoice.save()
+
+        # Optionally, create and save a RetainerPaymentDetails instance
+        if pay_method:
+            ret_payment = retainer_payment_details(
+                retainer=retainer_invoice,
+                payment_opt=pay_method,
+                acc_no=acc_no,
+                cheque_no=cheque_no,
+                upi_id=upi_id
+            )
+            ret_payment.save()
+
+        # Redirect to retainer_list.html after saving
+        return redirect('retainer_list')
+
+    else:
+        return HttpResponse("Invalid request")
