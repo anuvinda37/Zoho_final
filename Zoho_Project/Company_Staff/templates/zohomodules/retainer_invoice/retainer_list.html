@@ -118,14 +118,14 @@
                   </thead>
                   <tbody style="background-color: black;">
                     {% for invoice in invoices %}
-                        <tr style="background-color: rgb(0, 0, 0); border-color:rgba(0, 0, 0, 0.549) rgb(0, 0, 0) rgb(173, 166, 166) rgb(0, 0, 0); text-align: center;" class='clickable-row' data-href="{% url 'retaineroverview' invoice.id %}">
-                            <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="{% url 'retaineroverview'  invoice.id %}">{{ invoice.retainer_invoice_date }}</a></td>
-                            <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="{% url 'retaineroverview' invoice.id %}">{{ invoice.retainer_invoice_number }}</a></td>
-                            <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="{% url 'retaineroverview' invoice.id %}">{{ invoice.customer_name.customer_display_name }}</a></td>
-                            <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="{% url 'retaineroverview'  invoice.id %}">{{ invoice.customer_mailid }}</a></td>
-                            <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="{% url 'retaineroverview'  invoice.id %}">{{ invoice.total_amount }}</a></td>
-                            <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="{% url 'retaineroverview'  invoice.id %}">{% if invoice.is_sent %} Sent {% else %} Draft {% endif %}</a></td>
-                            <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="{% url 'retaineroverview'  invoice.id %}">{{ invoice.balance }}</a></td>
+                        <tr style="background-color: rgb(0, 0, 0); border-color:rgba(0, 0, 0, 0.549) rgb(0, 0, 0) rgb(173, 166, 166) rgb(0, 0, 0); text-align: center;" class='clickable-row' data-href="{% url 'retaineroverview' pk=invoice.pk %}">
+                            <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="{% url 'retaineroverview' pk=invoice.pk %}">{{ invoice.retainer_invoice_date }}</a></td>
+                            <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="{% url 'retaineroverview' pk=invoice.pk %}">{{ invoice.retainer_invoice_number }}</a></td>
+                            <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="{% url 'retaineroverview' pk=invoice.pk %}">{{ invoice.customer_name.customer_display_name }}</a></td>
+                            <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="{% url 'retaineroverview' pk=invoice.pk %}">{{ invoice.customer_mailid }}</a></td>
+                            <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="{% url 'retaineroverview' pk=invoice.pk %}">{{ invoice.total_amount }}</a></td>
+                            <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="{% url 'retaineroverview' pk=invoice.pk %}">{% if invoice.is_sent %} Sent {% else %} Draft {% endif %}</a></td>
+                            <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="{% url 'retaineroverview' pk=invoice.pk %}">{{ invoice.balance }}</a></td>
                         </tr>
                     {% endfor %}
                 </tbody>

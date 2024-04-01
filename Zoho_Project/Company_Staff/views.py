@@ -13220,90 +13220,96 @@ def get_bank_details(request):
 
 
 def create_invoice_draft(request):
-    
     if request.method=='POST':
-        user=request.user
-        select=request.POST['customer_id']
-        customer_name=customer.objects.get(id=select)
-        customer_name11=customer_name.customerName
-        customer_name1=customer_name11.upper()
-        customer_mailid=request.POST['cx_mail']
-        customer_placesupply=request.POST['cus_place1']
-        retainer_invoice_number=request.POST['retainer-invoice-number']
-        references=request.POST['references']
-        last_reference = retInvoiceReference.objects.filter(user = request.user.id).last()
-        if last_reference == None:
-            ref = retInvoiceReference(reference = int(references),user = user)
-            ref.save()
-        else:
-            last_reference.reference = int(references)
-            last_reference.save()
-        retainer_invoice_date=request.POST['invoicedate']
-        total_amount=request.POST.get('total')
-        bal_amount=request.POST['balance']
-        customer_notes=request.POST['customer_notes']
-        terms_and_conditions=request.POST['terms']
-        pay_opt1=request.POST['pay_method']
+        # Extract data from the request
+        user = request.user
+        select = request.POST['customer_id']
+        customer_name = Customer.objects.get(id=select)
+        customer_name11 = customer_name.customerName
+        customer_name1 = customer_name11.upper()
+        customer_mailid = request.POST['cx_mail']
+        customer_placesupply = request.POST['cus_place1']
+        retainer_invoice_number = request.POST['retainer-invoice-number']
+        references = request.POST['references']
+        retainer_invoice_date = request.POST['invoicedate']
+        total_amount = request.POST.get('total')
+        bal_amount = request.POST['balance']
+        customer_notes = request.POST['customer_notes']
+        terms_and_conditions = request.POST['terms']
+        paid = request.POST['paid']
+        pay_opt1 = request.POST['pay_method']
         acc_no = request.POST.get('acc_no', '')
         cheque_no = request.POST.get('chq_no', '')
         upi_id = request.POST.get('upi_id', '')
-        paid = request.POST['paid']
-        if pay_opt1 != '':
-            if pay_opt1 == 'cash':
-                bankid="null"
-            elif pay_opt1 == 'upi':
-                bankid="null"
-            elif pay_opt1 == 'cheque':
-                bankid="null"
-            else:
-                bankid=pay_opt1.split(" ")[0]
-                bank_id=Bankcreation.objects.filter(name=bankid,ac_no=acc_no)
-                for i in bank_id:
-                    bankname=i.name
-                    b_id=i.id
-                    bank=Bankcreation.objects.get(id=b_id)
-       
-        retainer_invoice=RetainerInvoice(
-            user=user,customer_name=customer_name,customer_name1=customer_name1,customer_mailid=customer_mailid,customer_placesupply=customer_placesupply,retainer_invoice_number=retainer_invoice_number,refrences=references,retainer_invoice_date=retainer_invoice_date,total_amount=total_amount,balance=bal_amount,customer_notes=customer_notes,terms_and_conditions=terms_and_conditions,advance=paid)
-    
-        retainer_invoice.save()
 
-        if pay_opt1 != '':
-            if pay_opt1 == 'cash':
-                ret_payment=retainer_payment_details(user=user,retainer=retainer_invoice,payment_opt=pay_opt1,acc_no=acc_no,cheque_no=cheque_no,upi_id=upi_id)
-                ret_payment.save()
-            elif pay_opt1 == 'cheque':
-                ret_payment=retainer_payment_details(user=user,retainer=retainer_invoice,payment_opt=pay_opt1,acc_no=acc_no,cheque_no=cheque_no,upi_id=upi_id)
-                ret_payment.save()
-            elif pay_opt1 == 'upi':
-                ret_payment=retainer_payment_details(user=user,retainer=retainer_invoice,payment_opt=pay_opt1,acc_no=acc_no,cheque_no=cheque_no,upi_id=upi_id)
-                ret_payment.save()
-            else:
-                ret_payment=retainer_payment_details(user=user,retainer=retainer_invoice,payment_opt=bankname,acc_no=acc_no,bank=bank,cheque_no=cheque_no,upi_id=upi_id)
-                ret_payment.save()
-        itemname =[]
-        itemid =[]
-        description = request.POST.getlist('description[]')
-        amount =request.POST.getlist('amount[]')
-        itm=request.POST.getlist('item[]')
-        for i in itm:
-            w = AddItem.objects.get(id = i)
-            x = w.Name
-            y = w
-            itemname.append(x)
-            itemid.append(y)
-            
-        qty=request.POST.getlist('quantity[]')
-        rate=request.POST.getlist('rate[]')
-        if len(description)==len(amount)==len(itemname)==len(qty)==len(rate)==len(itemid):
-            mapped = zip(description,amount,itemname,qty,rate,itemid)
-            mapped=list(mapped)
-            for ele in mapped:
-                created = Retaineritems.objects.create(description=ele[0],amount=ele[1],itemname=ele[2],quantity=ele[3],rate=ele[4] ,item=ele[5],retainer=retainer_invoice)
+        # Creating or updating retInvoiceReference
+        last_reference = retInvoiceReference.objects.filter(user=user).last()
+        if last_reference is None:
+            reford = '01'
         else:
-            pass
+            reford = str(last_reference.reference + 1).zfill(2)
+
+        ret_invoice = RetainerInvoice.objects.create(
+            user=user,
+            customer_name=customer_name,
+            customer_name1=customer_name1,
+            customer_mailid=customer_mailid,
+            customer_placesupply=customer_placesupply,
+            retainer_invoice_number=retainer_invoice_number,
+            references=references,
+            retainer_invoice_date=retainer_invoice_date,
+            total_amount=total_amount,
+            balance=bal_amount,
+            customer_notes=customer_notes,
+            terms_and_conditions=terms_and_conditions,
+            advance=paid,
+            reford=reford  # Add reference order
+        )
+
+        # Creating or updating retainer_payment_details
+        if pay_opt1:
+            if pay_opt1 in ['cash', 'cheque', 'upi']:
+                ret_payment = retainer_payment_details.objects.create(
+                    user=user,
+                    retainer=ret_invoice,
+                    payment_opt=pay_opt1,
+                    acc_no=acc_no,
+                    cheque_no=cheque_no,
+                    upi_id=upi_id
+                )
+            else:
+                bank_name, acc_no = pay_opt1.split(" ")
+                bank = Bankcreation.objects.get(name=bank_name, ac_no=acc_no)
+                ret_payment = retainer_payment_details.objects.create(
+                    user=user,
+                    retainer=ret_invoice,
+                    payment_opt=bank_name,
+                    acc_no=acc_no,
+                    bank=bank,
+                    cheque_no=cheque_no,
+                    upi_id=upi_id
+                )
+
+        # Saving retainer items
+        description = request.POST.getlist('description[]')
+        amount = request.POST.getlist('amount[]')
+        item_ids = request.POST.getlist('item[]')
+        qty = request.POST.getlist('quantity[]')
+        rate = request.POST.getlist('rate[]')
+
+        for i in range(len(description)):
+            item = Items.objects.get(id=item_ids[i])
+            Retaineritems.objects.create(
+                retainer=ret_invoice,
+                description=description[i],
+                amount=amount[i],
+                itemname=item,
+                quantity=qty[i],
+                rate=rate[i]
+            )
 
         return redirect('retainer_list')
+
 from django.shortcuts import redirect
 
 def create_invoice_send(request):
@@ -13357,56 +13363,79 @@ def create_invoice_send(request):
 
     else:
         return HttpResponse("Invalid request")
-def retaineroverview(request,pk):                                                                
-    if 'login_id' in request.session:
-        login_id = request.session['login_id']
-        if 'login_id' not in request.session:
-            return redirect('/')
-    log_details= LoginDetails.objects.get(id=login_id)
-    if log_details.user_type == 'Staff':
+from django.contrib.auth.models import User
+
+from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpResponse
+from django.shortcuts import render
+from django.db.models import Max
+from .models import Items, Item_Transaction_History, Items_comments, RetainerInvoice
+
+from django.shortcuts import get_object_or_404
+
+def retaineroverview(request, pk):
+    try:
+        # Attempt to retrieve the Items object with the provided pk
+        selitem = get_object_or_404(Items, id=pk)
+        
+        # Assuming the rest of your code here
+        if 'login_id' in request.session:
+            login_id = request.session.get('login_id')
+            if not login_id:
+                return redirect('/')
+            
+            log_details = LoginDetails.objects.get(id=login_id)
+            
+            if log_details.user_type == 'Staff':
                 dash_details = StaffDetails.objects.get(login_details=log_details)
-                item=Items.objects.filter(company=dash_details.company)
-                allmodules= ZohoModules.objects.get(company=dash_details.company,status='New')
-              
-                items=Items.objects.filter(company=dash_details.company)
-                selitem=Items.objects.get(id=pk)
-                est_comments=Items_comments.objects.filter(Items=pk)
-                stock_value=selitem.opening_stock*selitem.purchase_price  
+                item = Items.objects.filter(company=dash_details.company)
+                allmodules = ZohoModules.objects.get(company=dash_details.company, status='New')
+                est_comments = Items_comments.objects.filter(Items=pk)
+                stock_value = selitem.opening_stock * selitem.purchase_price  
                 latest_date = Item_Transaction_History.objects.filter(items_id=pk).aggregate(latest_date=Max('Date'))['latest_date']    
                 filtered_data = Item_Transaction_History.objects.filter(Date=latest_date, items_id=pk)
+                invoices = RetainerInvoice.objects.filter(company=dash_details.company).order_by('-id')
                 context = {
-                     'details': dash_details,
-                
-                    'allmodules': allmodules,
-                    'items':items,
-                    'selitem':selitem,
-                    'stock_value':stock_value,
-                    'latest_item_id':filtered_data,
-                    'est_comments':est_comments
-                }
-                return render(request, 'zohomodules/retainer_invoice/retaineroverview.html',context)
-    if log_details.user_type == 'Company':
-            dash_details = CompanyDetails.objects.get(login_details=log_details)
-       
-            allmodules= ZohoModules.objects.get(company=dash_details,status='New')
-            items=Items.objects.filter(company=dash_details)
-            selitem=Items.objects.get(id=pk)
-            est_comments=Items_comments.objects.filter(Items=pk)
-            stock_value=selitem.opening_stock*selitem.purchase_price  
-            latest_date = Item_Transaction_History.objects.filter(items_id=pk).aggregate(latest_date=Max('Date'))['latest_date']    
-            filtered_data = Item_Transaction_History.objects.filter(Date=latest_date, items_id=pk)
-            context = {
                     'details': dash_details,
-                   
                     'allmodules': allmodules,
-                    'items':items,
-                    'selitem':selitem,
-                    'stock_value':stock_value,
-                    'latest_item_id':filtered_data,
-                    'est_comments':est_comments
-            }
+                    'items': item,
+                    'selitem': selitem,
+                    'stock_value': stock_value,
+                    'latest_item_id': filtered_data,
+                    'est_comments': est_comments,
+                    'invoices': invoices
+                }
+                return render(request, 'zohomodules/retainer_invoice/retaineroverview.html', context)
+            
+            if log_details.user_type == 'Company':
+                dash_details = CompanyDetails.objects.get(login_details=log_details)
+                allmodules = ZohoModules.objects.get(company=dash_details, status='New')
+                items = Items.objects.filter(company=dash_details)
+                est_comments = Items_comments.objects.filter(Items=pk)
+                stock_value = selitem.opening_stock * selitem.purchase_price  
+                latest_date = Item_Transaction_History.objects.filter(items_id=pk).aggregate(latest_date=Max('Date'))['latest_date']    
+                filtered_data = Item_Transaction_History.objects.filter(Date=latest_date, items_id=pk)
+                invoices = RetainerInvoice.objects.filter(company=dash_details.company).order_by('-id')
+                context = {
+                    'details': dash_details,
+                    'allmodules': allmodules,
+                    'items': items,
+                    'selitem': selitem,
+                    'stock_value': stock_value,
+                    'latest_item_id': filtered_data,
+                    'est_comments': est_comments,
+                    'invoices': invoices
+                }
+                return render(request, 'zohomodules/retainer_invoice/retaineroverview.html', context)
+        
+        return render(request, 'zohomodules/retainer_invoice/retaineroverview.html')
     
-            return render(request, 'zohomodules/retainer_invoice/retaineroverview.html',context)
+    except ObjectDoesNotExist:
+        return HttpResponse("The requested item does not exist.")
 
 
-    return render(request, 'zohomodules/retainer_invoice/retaineroverview.html')
+
+
+
+  
+
