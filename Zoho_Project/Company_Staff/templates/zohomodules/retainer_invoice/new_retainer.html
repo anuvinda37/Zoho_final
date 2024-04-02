@@ -565,6 +565,7 @@ li{
                             $('#customer_gstno').val(response.gstin);
                             $('#customer_address').val(response.customer_address);
                             $('#customer_id').val(customerId);
+                            $('#cus_place1').val(response.place_of_supply);
                             // Update other fields as needed
                         },
                         error: function(xhr, errmsg, err) {

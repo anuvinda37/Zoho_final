@@ -13174,6 +13174,7 @@ def get_customer_details(request):
             'gst_treatment': customer.GST_treatement,
             'gstin': customer.GST_number,
             'customer_address': customer.billing_address,
+            'place_of_supply': customer.place_of_supply, 
             # Include other fields you need
         }
         print(response_data)  # Debugging line
@@ -13311,6 +13312,7 @@ def create_invoice_draft(request):
         return redirect('retainer_list')
 
 from django.shortcuts import redirect
+from .models import Retaineritems
 
 def create_invoice_send(request):
     if request.method == 'POST':
@@ -13358,27 +13360,94 @@ def create_invoice_send(request):
             )
             ret_payment.save()
 
+        # Save Retaineritems instances for each item received in the POST request
+        description = request.POST.getlist('description[]')
+        amount = request.POST.getlist('amount[]')
+        item_ids = request.POST.getlist('item[]')
+        qty = request.POST.getlist('quantity[]')
+        rate = request.POST.getlist('rate[]')
+
+        for i in range(len(description)):
+            item = Items.objects.get(id=item_ids[i])
+            Retaineritems.objects.create(
+                retainer=retainer_invoice,
+                description=description[i],
+                amount=amount[i],
+                itemname=item,
+                quantity=qty[i],
+                rate=rate[i]
+            )
+
         # Redirect to retainer_list.html after saving
         return redirect('retainer_list')
 
     else:
         return HttpResponse("Invalid request")
-from django.contrib.auth.models import User
 
-from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.auth.models import User
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Max
 from .models import Items, Item_Transaction_History, Items_comments, RetainerInvoice
+from .models import LoginDetails, StaffDetails, CompanyDetails, ZohoModules
 
-from django.shortcuts import get_object_or_404
-
-def retaineroverview(request, pk):
+def retaineroverview(request, pk=None):  # Set pk to None to handle the case when it's not provided
     try:
-        # Attempt to retrieve the Items object with the provided pk
-        selitem = get_object_or_404(Items, id=pk)
+        if pk is not None:
+            # Attempt to retrieve the Items object with the provided pk
+            # selitem = get_object_or_404(Items, id=pk)
+            # Rest of your code for handling the retainer overview with the provided pk
+            if 'login_id' in request.session:
+                login_id = request.session.get('login_id')
+                if not login_id:
+                    return redirect('/')
+                
+                log_details = LoginDetails.objects.get(id=login_id)
+                
+                if log_details.user_type == 'Staff':
+                    dash_details = StaffDetails.objects.get(login_details=log_details)
+                    # item = Items.objects.filter(company=dash_details.company)
+                    allmodules = ZohoModules.objects.get(company=dash_details.company, status='New')
+                    est_comments = Items_comments.objects.filter(Items=pk)
+                    # stock_value = selitem.opening_stock * selitem.purchase_price  
+                    latest_date = Item_Transaction_History.objects.filter(items_id=pk).aggregate(latest_date=Max('Date'))['latest_date']    
+                    filtered_data = Item_Transaction_History.objects.filter(Date=latest_date, items_id=pk)
+                    invoices = RetainerInvoice.objects.filter(company=dash_details.company).order_by('-id')
+                    context = {
+                        'details': dash_details,
+                        'allmodules': allmodules,
+                        # 'items': item,
+                        # 'selitem': selitem,
+                        # 'stock_value': stock_value,
+                        'latest_item_id': filtered_data,
+                        'est_comments': est_comments,
+                        'invoices': invoices
+                    }
+                    return render(request, 'zohomodules/retainer_invoice/retaineroverview.html', context)
+                
+                if log_details.user_type == 'Company':
+                    dash_details = CompanyDetails.objects.get(login_details=log_details)
+                    allmodules = ZohoModules.objects.get(company=dash_details, status='New')
+                    # items = Items.objects.filter(company=dash_details)
+                    est_comments = Items_comments.objects.filter(Items=pk)
+                    # stock_value = selitem.opening_stock * selitem.purchase_price  
+                    latest_date = Item_Transaction_History.objects.filter(items_id=pk).aggregate(latest_date=Max('Date'))['latest_date']    
+                    filtered_data = Item_Transaction_History.objects.filter(Date=latest_date, items_id=pk)
+                    invoices = RetainerInvoice.objects.filter(company=dash_details.company).order_by('-id')
+                    context = {
+                        'details': dash_details,
+                        'allmodules': allmodules,
+                        # 'items': items,
+                        # 'selitem': selitem,
+                        # 'stock_value': stock_value,
+                        'latest_item_id': filtered_data,
+                        'est_comments': est_comments,
+                        'invoices': invoices
+                    }
+                    return render(request, 'zohomodules/retainer_invoice/retaineroverview.html', context)
         
-        # Assuming the rest of your code here
+        # Default behavior when pk is not provided or item is not found
         if 'login_id' in request.session:
             login_id = request.session.get('login_id')
             if not login_id:
@@ -13388,43 +13457,25 @@ def retaineroverview(request, pk):
             
             if log_details.user_type == 'Staff':
                 dash_details = StaffDetails.objects.get(login_details=log_details)
-                item = Items.objects.filter(company=dash_details.company)
+                # item = Items.objects.filter(company=dash_details.company)
                 allmodules = ZohoModules.objects.get(company=dash_details.company, status='New')
-                est_comments = Items_comments.objects.filter(Items=pk)
-                stock_value = selitem.opening_stock * selitem.purchase_price  
-                latest_date = Item_Transaction_History.objects.filter(items_id=pk).aggregate(latest_date=Max('Date'))['latest_date']    
-                filtered_data = Item_Transaction_History.objects.filter(Date=latest_date, items_id=pk)
-                invoices = RetainerInvoice.objects.filter(company=dash_details.company).order_by('-id')
+                # Assuming you need some data here even without the pk
+                # Adjust this part according to your requirements
                 context = {
                     'details': dash_details,
                     'allmodules': allmodules,
-                    'items': item,
-                    'selitem': selitem,
-                    'stock_value': stock_value,
-                    'latest_item_id': filtered_data,
-                    'est_comments': est_comments,
-                    'invoices': invoices
+                    # 'items': item,
                 }
                 return render(request, 'zohomodules/retainer_invoice/retaineroverview.html', context)
             
             if log_details.user_type == 'Company':
                 dash_details = CompanyDetails.objects.get(login_details=log_details)
                 allmodules = ZohoModules.objects.get(company=dash_details, status='New')
-                items = Items.objects.filter(company=dash_details)
-                est_comments = Items_comments.objects.filter(Items=pk)
-                stock_value = selitem.opening_stock * selitem.purchase_price  
-                latest_date = Item_Transaction_History.objects.filter(items_id=pk).aggregate(latest_date=Max('Date'))['latest_date']    
-                filtered_data = Item_Transaction_History.objects.filter(Date=latest_date, items_id=pk)
-                invoices = RetainerInvoice.objects.filter(company=dash_details.company).order_by('-id')
+                # Assuming you need some data here even without the pk
+                # Adjust this part according to your requirements
                 context = {
                     'details': dash_details,
                     'allmodules': allmodules,
-                    'items': items,
-                    'selitem': selitem,
-                    'stock_value': stock_value,
-                    'latest_item_id': filtered_data,
-                    'est_comments': est_comments,
-                    'invoices': invoices
                 }
                 return render(request, 'zohomodules/retainer_invoice/retaineroverview.html', context)
         
@@ -13432,6 +13483,7 @@ def retaineroverview(request, pk):
     
     except ObjectDoesNotExist:
         return HttpResponse("The requested item does not exist.")
+
 
 
 

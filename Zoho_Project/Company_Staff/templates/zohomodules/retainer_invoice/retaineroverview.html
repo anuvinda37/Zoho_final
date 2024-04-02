@@ -247,7 +247,7 @@
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
               <li class="breadcrumb-item"><a href="{% url 'company_dashboard' %}" class="text-warning-emphasis">Dashboard</a></li>
-              <li class="breadcrumb-item"><a href="{% url 'items_list' %}" class="text-warning-emphasis">Items</a></li>
+              <li class="breadcrumb-item"><a href="" class="text-warning-emphasis">Retainer Invoices</a></li>
               <li class="breadcrumb-item" aria-current="page">Overview</li>
             </ol>
         </nav>
@@ -261,7 +261,7 @@
              <div class="col-md-3 scrollable-container" style="border-right: 1px solid white; overflow-y: scroll; height: 84vh;width: 25%;">
                <div class="row">
              
-                 <a class="text-white" style="font-size: 1.5rem;color: white; padding-left: 20px; padding-top: 20px;">Items</a>
+                 <a class="text-white" style="font-size: 1.5rem;color: white; padding-left: 20px; padding-top: 20px;">All Retainer Invoices</a>
               
                  <br>      
                  <div class="col-md-2">
@@ -271,9 +271,9 @@
                        </a>
                        
                        <div class="dropdown-menu m-1" style="background-color: black; color: white;">
-                        <a class="dropdown-item text-white" href="{% url 'itemsoverview' selitem.id %}">All</a>
-                        <a class="dropdown-item text-white" href="{% url 'item_view_sort_by_name' selitem.id %}">Item Name</a>
-                        <a class="dropdown-item text-white" href="{% url 'item_view_sort_by_hsn' selitem.id %}">HSN</a>
+                        <a class="dropdown-item text-white" href="">All</a>
+                        <a class="dropdown-item text-white" href="">Item Name</a>
+                        <a class="dropdown-item text-white" href="">HSN</a>
                        </div>
                    </div>
                </div>
@@ -285,9 +285,9 @@
                        </a>
                
                        <div class="dropdown-menu m-1" style="background-color: #000;">
-                        <a class="dropdown-item text-white" href="{% url 'itemsoverview' selitem.id %}">All</a>
-                        <a class="dropdown-item text-white" href="{% url 'filter_item_view_Active' selitem.id %}">Active</a>
-                        <a class="dropdown-item text-white" href="{% url 'filter_item_view_inActive' selitem.id %}">Inactive</a>
+                        <a class="dropdown-item text-white" href="">All</a>
+                        <a class="dropdown-item text-white" href="">Active</a>
+                        <a class="dropdown-item text-white" href="">Inactive</a>
                        </div>
                    </div>
                </div>
@@ -302,7 +302,7 @@
                </script>
                
                <div class="col-md-3" style="padding-left: 120PX;">
-                   <a class="btn btn btn-outline-warning text-right mt-2" style="height: 38px; padding-top: 12px; padding-left: 17px;" href="{% url 'new_items'%}">
+                   <a class="btn btn btn-outline-warning text-right mt-2" style="height: 38px; padding-top: 12px; padding-left: 17px;" href="">
                        <i class="fa fa-plus"></i>
                    </a>
                </div>
@@ -327,25 +327,25 @@
              <!-- Table 2: Billable Projects -->
              <table class="table  text-white" id="table2">
                <tbody>
-                 {% for i in items %}
+                 
                    <tr class="clickable" id="{{i.id}}">
                      <td class="justify-content-between align-items-center ">
                        <!-- <b ><a class="text-white"  href="">{{i.item_name}} </a></b>
                        <br>
                        <a class="text-white"  href="">{{i.hsn_code}}</a><br> -->
-                       <label class="text-left d-block"><a class="text-white"  href="{% url 'itemsoverview' i.id %}">{{i.item_name}} </a></label>
+                       <label class="text-left d-block"><a class="text-white"  href="">{{i.item_name}} </a></label>
                        <br>
-                       <label class="text-left d-block"><a class="text-white"  href="{% url 'itemsoverview' i.id %}">{{i.hsn_code}}</a></label>
+                       <label class="text-left d-block"><a class="text-white"  href="">{{i.hsn_code}}</a></label>
                   
                      </td>
                      
                      <td>
-                       <label class="text-end d-block"><a class="text-white"  href="{% url 'itemsoverview' i.id %}">{{i.activation_tag}}</a></label>
+                       <label class="text-end d-block"><a class="text-white"  href="">{{i.activation_tag}}</a></label>
                        <br>
-                       <label class="text-end d-block"><a class="text-white"  href="{% url 'itemsoverview' i.id %}">{{i.current_stock}}</a></label>
+                       <label class="text-end d-block"><a class="text-white"  href="">{{i.current_stock}}</a></label>
                      </td>
                    </tr></a>
-                 {% endfor %}
+                 
                </tbody>
              </table>
              <!-- <table id="table2" class="table customer-table" style="border: 1px solid black; width: 100%; margin-left: 0;color: #d19d0d;">
@@ -413,8 +413,10 @@
         <div class="col-md-6">
           <a class="btn" style="background-color: chocolate; margin-right: 2vh;color: aliceblue;"><i class="fas fa-eye"></i>
             Overview</a>
-            <a class="btn" style="background-color: chocolate; margin-right: 2vh;color: aliceblue;" onclick="totemplate()"><i class="fas fa-eye"></i>
-              Transaction</a>
+
+           
+            <a class="btn" style="background-color: chocolate; margin-right: 2vh;color: aliceblue;" onclick="totemplate()"><i class="fa fa-file-alt"></i>
+              Templates</a>
               <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     // Get the elements by ID
@@ -459,17 +461,17 @@
           <div class="col-md-6 d-flex justify-content-between align-items-center">
       
               <!-- Edit Button -->
-              <a href="{% url 'edititems'  selitem.id%}" class="btn btn-outline-warning py-2 text-warning" title="Save this draft">
+              <a href="" class="btn btn-outline-warning py-2 text-warning" title="Save this draft">
                   <i class="fas fa-pencil-alt"></i>
               </a>
       
               <!-- Item Status Edit Button -->
-              <a href="{% url 'item_status_edit' selitem.id %}" class="btn btn-outline-warning py-2" title="Save this draft" style="margin-left: 4px;">
+              <a href="" class="btn btn-outline-warning py-2" title="Save this draft" style="margin-left: 4px;">
                   {{selitem.activation_tag}}
               </a>
       
               <!-- Delete Button -->
-              <a href="{% url 'deleteitem'  selitem.id%}" class="delete fa fa-trash btn btn-outline-warning text-warning px-2 py-2"
+              <a href="" class="delete fa fa-trash btn btn-outline-warning text-warning px-2 py-2"
                   data-toggle="tooltip" title="DELETE" onclick="return confirm('Do you want to Delete this Item?');" style="margin-left: 4px;"></a>
       
               <!-- Share Button -->
@@ -510,7 +512,7 @@
               <a class="btn btn-outline-warning" href="" data-toggle="modal" data-target="#commentModal2" data-toggle="tooltip" title="history">
                 <i class="fa-solid fa-clock-rotate-left"></i>
               </a>
-              <a href="{% url 'items_list'%}" class="delete fa fa-times  btn btn-outline-warning text-warning px-2 py-2 btn-margin" style="width:80px;" data-toggle="tooltip" title="back" ></a>
+              <a href="" class="delete fa fa-times  btn btn-outline-warning text-warning px-2 py-2 btn-margin" style="width:80px;" data-toggle="tooltip" title="back" ></a>
           
               <!-- History Button -->
               <!-- <a class="btn btn-outline-warning py-2" style="cursor: pointer;margin-left: 4px;" data-toggle="modal" data-target="#history" >History</a> -->
@@ -522,7 +524,7 @@
         style="background-color: #c4c1c1fd;  height: auto; margin-left:1px; margin-right: 1rem; width: 75%;  ">
   
         <div class="row text-center">
-          <h2 style="color: #000000;"><br>ITEM DETAILS  
+          <h2 style="color: #000000;"><br>RETAINER INVOICE  
             <hr>
           </h2>
         </div>    
@@ -532,142 +534,226 @@
         
         <div class="gen-info col-6 " style="padding-left: 3rem; ">
           <div class="row mt-1">
-            <div class="col-5"><label class="text-black" for="">Item Type:</label></div>
+            <div class="col-5"><label class="text-black" for="">Customer Name:</label></div>
             <div class="col-7">
-              <p class="bold text-black" style="max-width: 15rem;word-wrap: break-word;"> :&nbsp;{{selitem.item_type}}</p>
+              <p class="bold text-black" style="max-width: 15rem;word-wrap: break-word;">:&nbsp;</p>
             </div>
           </div>
           <div class="row mt-3">
-            <div class="col-5"><label class="text-black" for="">HSN Code:</label></div>
+            <div class="col-5"><label class="text-black" for="">Customer Mail ID:</label></div>
             <div class="col-7">
-              <p class="bold text-black" style="max-width: 15rem;word-wrap: break-word;">   {{selitem.hsn_code}}</p>
+              <p class="bold text-black" style="max-width: 15rem;word-wrap: break-word;">  </p>
             </div>
           </div>
           <div class="row mt-3">
-            <div class="col-5"><label class="text-black" for="">Unit :</label></div>
+            <div class="col-5"><label class="text-black" for="">GST Treatment:</label></div>
             <div class="col-7">
               <p class="bold text-black" style="max-width: 15rem;word-wrap: break-word;">
                 {{selitem.unit.unit_name}}</p>
             </div>
           </div>
           <div class="row mt-3">
-            <div class="col-5"><label class="text-black" for="">Tax Preference :</label></div>
+            <div class="col-5"><label class="text-black" for="">GST Number:</label></div>
             <div class="col-7">
               <p class="bold text-black" style="max-width: 15rem;word-wrap: break-word;">
                 {{selitem.tax_reference}}</p>
             </div>
           </div>
-          {% if selitem.tax_reference == "taxable" %}
+         
           <div class="row mt-3">
-            <div class="col-5"><label class="text-black" for="">Intrastate Tax :</label></div>
+            <div class="col-5"><label class="text-black" for="">Place Of Supply:</label></div>
             <div class="col-7">
               <p class="bold text-black" style="max-width: 15rem;word-wrap: break-word;">
-                GST{{selitem.intrastate_tax}}%</p>
-            </div>
-          </div>
-    
-          <div class="row mt-3">
-            <div class="col-5"><label class="text-black" for="">Interstate Tax :</label></div>
-            <div class="col-7">
-              <p class="bold text-black" style="max-width: 15rem;word-wrap: break-word;">  CGST{{selitem.interstate_tax}}%</p>
-            </div>
-          </div>
-          {% endif %}
-          <div class="row mt-3">
-            <div class="col-5"><label class="text-black" for="">Status :</label></div>
-            <div class="col-7">
-              <p class="bold text-black" style="max-width: 15rem;word-wrap: break-word;">         {{selitem.activation_tag}}</p>
+                </p>
             </div>
           </div>
           <div class="row mt-3">
-            <div class="col-5"><label class="text-black" for=""> Minimum Stock To Maintain :</label></div>
+            <div class="col-5"><label class="text-black" for="">Place Of Supply:</label></div>
             <div class="col-7">
-              <p class="bold text-black" style="max-width: 15rem;word-wrap: break-word;">        {{selitem.minimum_stock_to_maintain}}</p>
+                <p class="bold text-black" style="max-width: 15rem;word-wrap: break-word;">
+                    {{invoice.customer_placesupply}}
+                </p>
             </div>
-          </div>
-          <div class="row mt-3">
-            <div class="col-5"><label class="text-black" for="">Inventory Account : </label></div>
-            <div class="col-7">
-              <p class="bold text-black" style="max-width: 15rem;word-wrap: break-word;">{{selitem.inventory_account}}</p>
-            </div>
-          </div>
-          <div class="row mt-3">
-            <div class="col-5"><label class="text-black" for="">Opening stock :</label></div>
-            <div class="col-7">
-              <p class="bold text-black" style="max-width: 15rem;word-wrap: break-word;">{{selitem.opening_stock}}</p>
-            </div>
-          </div>
+        </div>
+        <br>
+        <br>
+        <br>
+        <hr>
         
-          <div class="row mt-3">
-            <div class="col-5"><label class="text-black" for="">Current Stock :</label></div>
-            <div class="col-7">
-              <p class="bold text-black" style="max-width: 15rem;word-wrap: break-word;">  {{selitem.current_stock}}</p>
-            </div>
+        <!-- Add your desired section here -->
+        <div class="row">
+          <div class="col-12 mt-1"> <!-- Use col-12 to make it full width -->
+              <div class="p-2" style="width: 100%;height: auto;background-color: rgb(30, 30, 30);border-radius: 5px;">
+                  <div class="row">
+                      <div class="col-12 text-center ">
+                          <h6>{{ forloop.counter }}</h6>
+                      </div>
+                  </div>
+                  <div class="row">
+                      <div class="col-12 text-center">
+                          <p><span class="text-white">Product Name : </span>{{i.itemname }}</p>
+                      </div>
+                  </div>
+                  <div class="row">
+                      <div class="col-12 text-center">
+                          <p><span class="text-white">Description :</span>{{i.description }}</p>
+                      </div>
+                  </div>
+                  <div class="row">
+                      <div class="col-12 text-center">
+                          <p><span class="text-white">Rate :</span>{{ i.rate }}</p>
+                      </div>
+                  </div>
+                  <div class="row">
+                      <div class="col-12 text-center">
+                          <p><span class="text-white">Quantity :</span>{{ i.quantity }}</p>
+                      </div>
+                  </div>
+                  <div class="row">
+                      <div class="col-12 text-center">
+                          <p><span class="text-white">Amount :</span>{{i.amount }}</p>
+                      </div>
+                  </div>
+              </div>
           </div>
+      </div>
+      
+      
+         
+        <br><br>  
+        
+         
+        
+          
         </div>
        
         
         <div class="p-info col-6 text-white" style="height: 100%; margin-bottom: 1vh;">
           <div class="card text-white" style="background-color: rgb(30, 30, 30); padding-left: 2rem; padding-top: 1rem;">
-            <div class="row text-center">
-              <h2 class="text-white">PURCHASE DETAILS {{latest_item_id.action}}
-                <hr>
-              </h2>
-            </div>
-  
-  
-            <div class="row mt-2 text-white" >
-              <div class="col-5"><label class="text-white" for="">Purchase Price </label></div>
-              <div class="col-7">
-                <p class="bold text-white"> : &nbsp;{{selitem.purchase_price}}</p>
+              <div class="row mt-3">
+                  <div class="col-sm-8 col-md-8 col-lg-8 ">
+                      <label for="" style="font-weight: 500;">Retainer Invoice
+                          No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</label>
+                  </div>
+                  <div class="col-sm-4 col-md-4 col-lg-4">
+                      <label for="">{{invoice.retainer_invoice_number}}</label>
+                  </div>
               </div>
-            </div>
-            <div class="row mt-2">
-              <div class="col-5"><label class="text-white" for="">Purchase Account </label></div>
-              <div class="col-7">
-                <p class="bold text-white" >  : &nbsp;{{selitem.purchase_account}}  </p>
+              <div class="row mt-1">
+                  <div class="col-sm-8 col-md-8 col-lg-8 ">
+                      <label for=""
+                          style="font-weight: 500;">Reference&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</label>
+                  </div>
+                  <div class="col-sm-4 col-md-4 col-lg-4">
+                      <label for="">{{invoice.refrences}}</label>
+                  </div>
               </div>
-            </div>
-            <div class="row mt-2">
-              <div class="col-5"><label class="text-white" for=""> Purchase Description </label></div>
-              <div class="col-7">
-                <p class="bold text-white"> : &nbsp; {{selitem.purchase_description}} </p>
+              <div class="row mt-1">
+                  <div class="col-sm-8 col-md-8 col-lg-8 ">
+                      <label for="" style="font-weight: 500;">Retainer Invoice
+                          Date&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</label>
+                  </div>
+                  <div class="col-sm-4 col-md-4 col-lg-4">
+                      <label for="">{{invoice.retainer_invoice_date}}</label>
+                  </div>
               </div>
-            </div>
-  
-  <br>
+              <hr>
+              <h4 style="color: rgb(238, 238, 237);text-align: center;">Details</h4>
+              <div class="row mt-4">
+                  <div class="col-sm-8 col-md-8 col-lg-8 ">
+                      <label for="" style="font-weight: 500;">Total
+                          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                          :</label>
+                  </div>
+                  <div class="col-sm-4 col-md-4 col-lg-4">
+                      <label for=""><b>{{invoice.total_amount}}</b></label>
+                  </div>
+              </div>
+              {% if invoice.advance %}
+              <div class="row">
+                  <div class="col-sm-8 col-md-8 col-lg-8 ">
+                      <label for="" style="font-weight: 500;">Advance
+                          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                          :</label>
+                  </div>
+                  <div class="col-sm-4 col-md-4 col-lg-4">
+                      <label for=""><b>{{invoice.advance}}</b></label>
+                  </div>
+              </div>
+              <div class="row ">
+                  <div class="col-sm-8 col-md-8 col-lg-8 ">
+                      <label for="" style="font-weight: 500;">Balance
+                          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                          &nbsp;&nbsp;&nbsp;&nbsp; :</label>
+                  </div>
+                  <div class="col-sm-4 col-md-4 col-lg-4">
+                      <label for=""><b>{{ invoice.balance }}</b></label>
+                  </div>
+              </div>
+              {% endif %}
+              <hr>
+              <h4 style="color: rgb(255, 255, 255);text-align: center;">Payment
+                Details
+            </h4>
+              {% if ret_payments.payment_opt %}
               
-              
-  
-     
-      <div class="row text-center">
-        <h2 class="text-white">SELLING DETAILS
-          <hr>
-        </h2>
+              <div class="row">
+                  <div class="col-sm-6 col-md-6 col-lg-6">
+                      <label class="text-light" for=""
+                          style="font-weight: 500;">Payment
+                          Method &nbsp;&nbsp;&nbsp;
+                          :</label>
+                  </div>
+                  <div class="col-sm-6 col-md-6 col-lg-6">
+                      <label for=""><b>{{ ret_payments.payment_opt }}</b></label>
+                  </div>
+              </div>
+              {% if ret_payments.acc_no %}
+              <div class="row">
+                  <div class="col-sm-6 col-md-6 col-lg-6">
+                      <label class="text-light" for="" style="font-weight: 500;">Ac/No
+                          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; :</label>
+                  </div>
+                  <div class="col-sm-6 col-md-6 col-lg-6">
+                      <label for=""><b>{{ ret_payments.acc_no }}</b></label>
+                  </div>
+              </div>
+              {% endif %}
+              {% if ret_payments.upi_id %}
+              <div class="row">
+                  <div class="col-sm-6 col-md-6 col-lg-6">
+                      <label class="text-light" for="" style="font-weight: 500;">UPI
+                          Id
+                          &nbsp;&nbsp;&nbsp;
+                          :</label>
+                  </div>
+                  <div class="col-sm-6 col-md-6 col-lg-6">
+                      <label for=""><b>{{ ret_payments.upi_id }}</b></label>
+                  </div>
+              </div>
+              {% endif %}
+              {% if ret_payments.cheque_no %}
+              <div class="row">
+                  <div class="col-sm-6 col-md-6 col-lg-6">
+                      <label class="text-light" for=""
+                          style="font-weight: 500;">Cheque No
+                          &nbsp;&nbsp;&nbsp;
+                          :</label>
+                  </div>
+                  <div class="col-sm-6 col-md-6 col-lg-6">
+                      <label for=""><b>{{ ret_payments.cheque_no }}</b></label>
+                  </div>
+              </div>
+              {% endif %}
+              {% endif %}
+          </div>
       </div>
-  
-  
-  
-        <div class="row mt-2">
-          <div class="col-5"><label class="text-white" for=""> Selling Price </label></div>
-          <div class="col-7">
-            <p class="bold text-white">  : &nbsp;{{selitem.selling_price}} </p>
-          </div>
-        </div>
-        <div class="row mt-2">
-          <div class="col-5"><label class="text-white" for=""> Sales Account </label></div>
-          <div class="col-7">
-            <p class="bold text-white">  : &nbsp;{{selitem.sales_account}} </p>
-          </div>
-        </div>
-        <div class="row mt-2">
-          <div class="col-5"><label class="text-white" for=""> Sales Description </label></div>
-          <div class="col-7">
-            <p class="bold text-white">  : &nbsp;{{selitem.sales_description}} </p>
-          </div>
-        </div>
-  </div>
-  </div>
+      
   </div>
   </div>
   </div>
@@ -685,8 +771,8 @@
           <div class="col-md-6">
             <a class="btn" style="background-color: chocolate; margin-right: 2vh;color: aliceblue;" onclick="totemplate2()"><i class="fas fa-eye"></i>
               Overview</a>
-              <a class="btn" style="background-color: chocolate; margin-right: 2vh;color: aliceblue;" onclick="totemplate()"><i class="fas fa-eye"></i>
-                Transaction</a>
+              <a class="btn" style="background-color: chocolate; margin-right: 2vh;color: aliceblue;" onclick="totemplate()"><i class="fa fa-file-alt"></i>
+                Templates</a>
      
     
     
@@ -694,27 +780,16 @@
           <div class="col-sm-1 " style="margin-left:-5%;">
             <div class="col-md-6 d-flex justify-content-between align-items-center">
         
-                <!-- Edit Button -->
-                <!-- <a href="{% url 'edititems'  selitem.id%}" class="btn btn-outline-warning py-2 text-warning" title="Save this draft">
-                    <i class="fas fa-pencil-alt"></i>
-                </a> -->
+                
         
-                <!-- Item Status Edit Button -->
-                <!-- <a href="{% url 'item_status_edit' selitem.id %}" class="btn btn-outline-warning py-2" title="Save this draft" style="margin-left: 4px;">
-                    {{selitem.activation_tag}}
-                </a> -->
-        
-                <!-- Delete Button -->
-                <!-- <a href="{% url 'deleteitem'  selitem.id%}" class="delete fa fa-trash btn btn-outline-warning text-warning px-2 py-2"
-                    data-toggle="tooltip" title="DELETE" onclick="return confirm('Do you want to Delete this creditnote?');" style="margin-left: 4px;"></a>
-         -->
+                
                 <!-- Share Button -->
                 <div class="dropdown px-2 py-4">
                     <a class="btn text-center  btn-outline-warning" id="sortbutton" data-bs-toggle="dropdown" role="button" style="margin-left: 4px;">
                         <i class="fas fa-share"></i>
                     </a>
                     <div class="dropdown-menu m-1" style="background-color: rgb(43, 42, 42); color: white;margin-left: 4px;">
-                        <a class="dropdown-item" data-toggle="modal" data-target="#shareBillEmail" href="#" style="color: #eeeaea;">GMAIL</a>
+                        <a class="dropdown-item" data-toggle="modal" data-target="#shareBillEmail" href="" style="color: #eeeaea;">GMAIL</a>
                         <a class="dropdown-item" href="javascript:void(0);" onclick="shareOnWhatsApp()" style="color: #fefefe;">WhatsApp</a>
                     </div>
                 </div>
@@ -1184,7 +1259,7 @@
         </div>
         <div class="modal-body" style="background: rgb(32, 35, 37);">
           <div class="card p-3 m-3">
-            <form action="{% url 'shareItemToEmail' selitem.id %}" method="post" class="needs-validation"
+            <form action="" method="post" class="needs-validation"
               id="share_to_email_form" autocomplete="off">
               {% csrf_token %}
               <div class="form-group">
@@ -1263,7 +1338,7 @@
         </div>
         <div class="modal-body" style="background: rgb(32, 35, 37);">
           <div class="card p-3 m-3">
-            <form action="{% url 'add_item_comment' selitem.id %}" method="post" class="needs-validation"
+            <form action="" method="post" class="needs-validation"
               id="share_to_email_form" autocomplete="off">
               {% csrf_token %}
               <div class="form-group">
@@ -1464,7 +1539,7 @@
             <span aria-hidden="true" style="font-size: x-large;">&times;</span>
           </button>
         </div>
-        <form action="{% url 'add_item_comment' selitem.id %}" method="POST" enctype="multipart/form-data">
+        <form action="" method="POST" enctype="multipart/form-data">
           {% csrf_token %}
           <div class="modal-body">
             <textarea type="text" class="form-control text-light" name="comment"></textarea>
