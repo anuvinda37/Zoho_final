@@ -413,6 +413,29 @@
         <div class="col-md-6">
           <a class="btn" style="background-color: chocolate; margin-right: 2vh;color: aliceblue;"><i class="fas fa-eye"></i>
             Overview</a>
+            
+
+
+            <a class="btn" style="background-color: chocolate; margin-right: 2vh;color: aliceblue;" href=" "  data-bs-toggle="dropdown"
+            id="attachmentDropdown" aria-haspopup="true" aria-expanded="false"
+            ><i class="fa fa-file-alt"></i> Templates
+        </a>
+
+        <div class="dropdown-menu" aria-labelledby="attachmentDropdown">
+            <a class="dropdown-item" onclick="template_function()"><i
+                    class="fa fa-file-alt"></i> Template 1</a>
+
+            <a class="dropdown-item" onclick="show_template2()"><i class="fa fa-file-alt"></i>
+                Template 2</a>
+
+            <a class="dropdown-item" onclick="show_template3()"><i class="fa fa-file-alt"></i>
+                Template 3</a>
+        </div>
+
+
+
+
+
 
            
             <a class="btn" style="background-color: chocolate; margin-right: 2vh;color: aliceblue;" onclick="totemplate()"><i class="fa fa-file-alt"></i>
@@ -536,27 +559,27 @@
           <div class="row mt-1">
             <div class="col-5"><label class="text-black" for="">Customer Name:</label></div>
             <div class="col-7">
-              <p class="bold text-black" style="max-width: 15rem;word-wrap: break-word;">:&nbsp;</p>
+              <p class="bold text-black" style="max-width: 15rem;word-wrap: break-word;">{{ customer_name }}</p>
             </div>
           </div>
           <div class="row mt-3">
             <div class="col-5"><label class="text-black" for="">Customer Mail ID:</label></div>
             <div class="col-7">
-              <p class="bold text-black" style="max-width: 15rem;word-wrap: break-word;">  </p>
+              <p class="bold text-black" style="max-width: 15rem;word-wrap: break-word;">{{ invoice.customer_mailid }} </p>
             </div>
           </div>
           <div class="row mt-3">
             <div class="col-5"><label class="text-black" for="">GST Treatment:</label></div>
             <div class="col-7">
               <p class="bold text-black" style="max-width: 15rem;word-wrap: break-word;">
-                {{selitem.unit.unit_name}}</p>
+                {{ gst_treatment }}</p>
             </div>
           </div>
           <div class="row mt-3">
             <div class="col-5"><label class="text-black" for="">GST Number:</label></div>
             <div class="col-7">
               <p class="bold text-black" style="max-width: 15rem;word-wrap: break-word;">
-                {{selitem.tax_reference}}</p>
+                {{ gst_number }}</p>
             </div>
           </div>
          
@@ -564,23 +587,17 @@
             <div class="col-5"><label class="text-black" for="">Place Of Supply:</label></div>
             <div class="col-7">
               <p class="bold text-black" style="max-width: 15rem;word-wrap: break-word;">
-                </p>
+                {{ place_of_supply }}</p>
             </div>
           </div>
-          <div class="row mt-3">
-            <div class="col-5"><label class="text-black" for="">Place Of Supply:</label></div>
-            <div class="col-7">
-                <p class="bold text-black" style="max-width: 15rem;word-wrap: break-word;">
-                    {{invoice.customer_placesupply}}
-                </p>
-            </div>
-        </div>
+         
         <br>
         <br>
         <br>
         <hr>
         
         <!-- Add your desired section here -->
+        {% for item in items %}
         <div class="row">
           <div class="col-12 mt-1"> <!-- Use col-12 to make it full width -->
               <div class="p-2" style="width: 100%;height: auto;background-color: rgb(30, 30, 30);border-radius: 5px;">
@@ -589,35 +606,37 @@
                           <h6>{{ forloop.counter }}</h6>
                       </div>
                   </div>
+                 
                   <div class="row">
                       <div class="col-12 text-center">
-                          <p><span class="text-white">Product Name : </span>{{i.itemname }}</p>
+                          <p><span class="text-white">Product Name : </span>{{ item.itemname }}</p>
                       </div>
                   </div>
                   <div class="row">
                       <div class="col-12 text-center">
-                          <p><span class="text-white">Description :</span>{{i.description }}</p>
+                          <p><span class="text-white">Description :</span>{{ item.description }}</p>
                       </div>
                   </div>
                   <div class="row">
                       <div class="col-12 text-center">
-                          <p><span class="text-white">Rate :</span>{{ i.rate }}</p>
+                          <p><span class="text-white">Rate :</span>{{ item.rate }}</p>
                       </div>
                   </div>
                   <div class="row">
                       <div class="col-12 text-center">
-                          <p><span class="text-white">Quantity :</span>{{ i.quantity }}</p>
+                          <p><span class="text-white">Quantity :</span>{{ item.quantity }}</p>
                       </div>
                   </div>
                   <div class="row">
                       <div class="col-12 text-center">
-                          <p><span class="text-white">Amount :</span>{{i.amount }}</p>
+                          <p><span class="text-white">Amount :</span>{{ item.amount }}</p>
                       </div>
                   </div>
               </div>
           </div>
       </div>
-      
+      {% endfor %}
+
       
          
         <br><br>  
