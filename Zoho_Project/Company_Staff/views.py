@@ -13404,13 +13404,15 @@ def retaineroverview(request, pk=None):
             
             invoice = RetainerInvoice.objects.get(pk=pk)
             items = Retaineritems.objects.filter(retainer=invoice)
+            payment_details = retainer_payment_details.objects.filter(retainer=invoice).first()  # Fetch payment details for the invoice
             # Accessing customer attributes
             customer_name = invoice.customer_name.customer_display_name  # Assuming customerName is the attribute for customer name
+            
             customer_email = invoice.customer_name.customer_email
             gst_treatment = invoice.customer_name.GST_treatement
             gst_number = invoice.customer_name.GST_number
             place_of_supply = invoice.customer_name.place_of_supply
-            
+            billing_address = invoice.customer_name.billing_address  # Fetch billing address
             context = {
                 'details': dash_details,
                 'invoice': invoice,
@@ -13420,6 +13422,8 @@ def retaineroverview(request, pk=None):
                 'gst_number': gst_number,
                 'place_of_supply': place_of_supply,
                 'items': items,
+                'billing_address': billing_address,  # Pass billing address to the context
+                'ret_payments': payment_details,
             }
             return render(request, 'zohomodules/retainer_invoice/retaineroverview.html', context)
         
