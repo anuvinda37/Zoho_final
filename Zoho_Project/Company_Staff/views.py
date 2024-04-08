@@ -13431,8 +13431,75 @@ def retaineroverview(request, pk=None):
     
     except ObjectDoesNotExist:
         return HttpResponse("The requested item does not exist.")
+def attachRetainerInvoiceFile(request, id):
+    if 'login_id' in request.session:
+        inv = RetainerInvoice.objects.get(id=id)
 
+        if request.method == 'POST' and len(request.FILES) != 0:
+            inv.document = request.FILES.get('file')
+            inv.save()
 
+        return redirect('retaineroverview', pk=id)
+    else:
+        return redirect('/')
+from django.core.mail import EmailMessage
+from django.http import JsonResponse
+from django.shortcuts import redirect
+from django.template.loader import get_template
+from django.contrib import messages
+from io import BytesIO
+from xhtml2pdf import pisa
+from .models import RetainerInvoice, Retaineritems
+
+def shareRetainerInvoiceToEmail(request, id):
+    try:
+        if request.method == 'POST':
+            # Get the retainer invoice object
+            invoice = RetainerInvoice.objects.get(id=id)
+            # Get the items associated with the retainer invoice
+            items = Retaineritems.objects.filter(retainer=invoice)
+            # Get the logged-in user's company details
+            company = invoice.company
+
+            # Extract email IDs and message from the POST request
+            emails_string = request.POST.get('email_ids')
+            email_message = request.POST.get('email_message')
+
+            # Split the string by commas and remove any leading or trailing whitespace
+            emails_list = [email.strip() for email in emails_string.split(',')]
+
+            # Render the retainer invoice PDF
+            context = {'invoice': invoice, 'items': items, 'company': company}
+            template_path = 'zohomodules/retainer_invoice/retainer_invoice_pdf.html'
+            template = get_template(template_path)
+            html = template.render(context)
+
+            # Generate PDF
+            result = BytesIO()
+            pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), result)
+            pdf = result.getvalue()
+
+            # Set email subject
+            subject = f"Retainer Invoice - {invoice.retainer_invoice_number}"
+
+            # Create email message
+            email = EmailMessage(
+                subject,
+                email_message,
+                settings.EMAIL_HOST_USER,
+                emails_list,
+            )
+            # Attach PDF
+            email.attach(f"RetainerInvoice_{invoice.retainer_invoice_number}.pdf", pdf, 'application/pdf')
+            email.send()
+
+            # Return success message
+            messages.success(request, "Retainer invoice shared successfully via email.")
+            return JsonResponse({'success': True})
+
+    except Exception as e:
+        # Return error message if any exception occurs
+        return JsonResponse({'success': False, 'error': str(e)})
 
 
 

@@ -427,38 +427,7 @@
               <a href="{% url 'deleteitem'  selitem.id%}" class="delete fa fa-trash btn btn-outline-warning text-warning px-2 py-2"
                   data-toggle="tooltip" title="DELETE" onclick="return confirm('Do you want to Delete this Item?');" style="margin-left: 4px;"></a>
       
-              <!-- Share Button -->
-              <!-- <div class="dropdown px-2 py-4">
-                  <a class="btn text-center  btn-outline-warning" id="sortbutton" data-bs-toggle="dropdown" role="button" style="margin-left: 4px;">
-                      <i class="fas fa-share"></i>
-                  </a>
-                  <div class="dropdown-menu m-1" style="background-color: rgb(43, 42, 42); color: white;margin-left: 4px;">
-                      <a class="dropdown-item" data-toggle="modal" data-target="#shareBillEmail" href="#" style="color: #eeeaea;">GMAIL</a>
-                      <a class="dropdown-item" href="javascript:void(0);" onclick="shareOnWhatsApp()" style="color: #fefefe;">WhatsApp</a>
-                  </div>
-              </div>
-      
-              <a class="text-dark" onclick="exportToPDF3()">
-                  <button class="btn btn-outline-warning" title="Pdf" style="width: 50px;margin-left: 4px;"><i class="fas fa-file-pdf" ></i></button>
-              </a>
-      
-              <a class="btn btn-outline-warning py-2" style="cursor: pointer;margin-left: 4px;" onclick="exportToExcel()" style="width: 50px;margin-left: 4px;">XLS</a>
-      
-              <a class="text-dark" onclick="printSelectedArea2()">
-                  <button class="btn btn-outline-warning" title="Print" style="width: 50px;margin-left: 4px;"><i class="fas fa-print" ></i></button>
-              </a>
-       -->
-              <!-- Comment Button -->
-              <!-- <div class="dropdown">
-                  <a href=" " class="btn btn-outline-warning py-2 fas fa-comment-dots dropdown-toggle text-warning"
-                      data-bs-toggle="dropdown" id="attachmentDropdown" aria-haspopup="true" aria-expanded="false" style="margin-left: 4px;"></a>
-                  <div class="dropdown-menu" aria-labelledby="attachmentDropdown" style="background-color: rgb(46, 45, 45); color: white;margin-left: 4px;">
-                      <a class="dropdown-item text-white" style="cursor: pointer;" data-toggle="modal" data-target="#cmnts"><i
-                              class="fa-solid fa fa-plus"></i>Add</a>
-                      <a class="dropdown-item text-white" style="cursor: pointer;" data-toggle="modal" data-target="#cmt_list"><i
-                              class="fas fa-list"></i>&nbsp;View List</a>
-                  </div>
-              </div> -->
+              
               <a class="btn btn-outline-warning" href="" data-toggle="modal" data-target="#commentModal" data-toggle="tooltip" title="comment">
                 <i class="far fa-comment"></i>
               </a>
@@ -467,8 +436,7 @@
               </a>
               <a href="{% url 'items_list'%}" class="delete fa fa-times  btn btn-outline-warning text-warning px-2 py-2 btn-margin" style="width:80px;" data-toggle="tooltip" title="back" ></a>
           
-              <!-- History Button -->
-              <!-- <a class="btn btn-outline-warning py-2" style="cursor: pointer;margin-left: 4px;" data-toggle="modal" data-target="#history" >History</a> -->
+              
           </div>
       </div><br>
       </div><br>
