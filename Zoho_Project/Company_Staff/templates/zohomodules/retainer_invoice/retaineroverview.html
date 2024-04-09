@@ -355,16 +355,20 @@
                        <!-- <b ><a class="text-white"  href="">{{i.item_name}} </a></b>
                        <br>
                        <a class="text-white"  href="">{{i.hsn_code}}</a><br> -->
-                       <label class="text-left d-block"><a class="text-white"  href="">{{i.item_name}} </a></label>
+                       <label class="text-left d-block"><a class="text-white"  href="">{{invoice.retainer_invoice_number}} </a></label>
                        <br>
-                       <label class="text-left d-block"><a class="text-white"  href="">{{i.hsn_code}}</a></label>
+                       <label class="text-left d-block"><a class="text-white"  href="">{{ customer_name }}</a></label>
                   
                      </td>
                      
                      <td>
-                       <label class="text-end d-block"><a class="text-white"  href="">{{i.activation_tag}}</a></label>
-                       <br>
-                       <label class="text-end d-block"><a class="text-white"  href="">{{i.current_stock}}</a></label>
+                      {% if invoices.is_draft == 1 %}
+                <label class="text-end d-block text-white">Draft</label>
+                {% else %}
+                <label class="text-end d-block text-white">Send</label>
+                {% endif %}
+                <br>
+                <label class="text-end d-block text-white">₹{{ invoice.total_amount }}</label>
                      </td>
                    </tr></a>
                  
@@ -436,7 +440,7 @@
           <div class="col-md-6 d-flex justify-content-between align-items-center">
       
               <!-- Edit Button -->
-              <a href="" class="btn btn-outline-warning mt-2 ms-1 btn-sm"  title="Save this draft">
+              <a href="{% url 'retainer_edit_page' retainer_id=retainer_id %}" class="btn btn-outline-warning mt-2 ms-1 btn-sm"  title="Save this draft">
                   <i style="height:5px;" class="fas fa-pencil-alt"></i>
               </a>
       

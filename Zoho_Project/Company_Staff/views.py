@@ -13399,10 +13399,23 @@ def retaineroverview(request, pk=None):
             
             if log_details.user_type == 'Staff':
                 dash_details = StaffDetails.objects.get(login_details=log_details)
+                item = Items.objects.filter(company=dash_details.company)
+       
+                allmodules = ZohoModules.objects.get(company=dash_details.company,status='New')
+                units = Unit.objects.filter(company=dash_details.company)
+                accounts = Chart_of_Accounts.objects.filter(company=dash_details.company)
             elif log_details.user_type == 'Company':
                 dash_details = CompanyDetails.objects.get(login_details=log_details)
-            
+                item = Items.objects.filter(company=dash_details.company)
+       
+                allmodules = ZohoModules.objects.get(company=dash_details.company,status='New')
+                units = Unit.objects.filter(company=dash_details.company)
+                accounts = Chart_of_Accounts.objects.filter(company=dash_details.company)
+
+                
             invoice = RetainerInvoice.objects.get(pk=pk)
+
+            
             items = Retaineritems.objects.filter(retainer=invoice)
             payment_details = retainer_payment_details.objects.filter(retainer=invoice).first()  # Fetch payment details for the invoice
             # Accessing customer attributes
@@ -13413,9 +13426,15 @@ def retaineroverview(request, pk=None):
             gst_number = invoice.customer_name.GST_number
             place_of_supply = invoice.customer_name.place_of_supply
             billing_address = invoice.customer_name.billing_address  # Fetch billing address
+            retainer_id = invoice.id  # Assuming the ID of the RetainerInvoice object is stored in the 'id' attribute
+            # Print the retainer object here
+            print(invoice)
             context = {
                 'details': dash_details,
                 'invoice': invoice,
+                'units': units,
+                'allmodules': allmodules,
+                'accounts': accounts,
                 'customer_name': customer_name,
                 'customer_email': customer_email,
                 'gst_treatment': gst_treatment,
@@ -13424,6 +13443,7 @@ def retaineroverview(request, pk=None):
                 'items': items,
                 'billing_address': billing_address,  # Pass billing address to the context
                 'ret_payments': payment_details,
+                'retainer_id': retainer_id,  # Pass the retainer_id to the context
             }
             return render(request, 'zohomodules/retainer_invoice/retaineroverview.html', context)
         
@@ -13501,7 +13521,74 @@ def shareRetainerInvoiceToEmail(request, id):
         # Return error message if any exception occurs
         return JsonResponse({'success': False, 'error': str(e)})
 
-
+def retainer_edit_page(request, retainer_id):
+    if 'login_id' in request.session:
+        login_id = request.session.get('login_id')
+        if not login_id:
+            return redirect('/')
+        
+        log_details = LoginDetails.objects.get(id=login_id)
+        
+        if log_details.user_type == 'Staff':
+            dash_details = StaffDetails.objects.get(login_details=log_details)
+        elif log_details.user_type == 'Company':
+            dash_details = CompanyDetails.objects.get(login_details=log_details)
+        
+        item = Items.objects.filter(company=dash_details.company)
+        allmodules = ZohoModules.objects.get(company=dash_details.company, status='New')
+        units = Unit.objects.filter(company=dash_details.company)
+        accounts = Chart_of_Accounts.objects.filter(company=dash_details.company)
+        
+        retainer = RetainerInvoice.objects.get(pk=retainer_id)
+        customer_name = retainer.customer_name.customer_display_name
+        customer_email = retainer.customer_name.customer_email
+        billing_address = retainer.customer_name.billing_address
+        gst_treatment = retainer.customer_name.GST_treatement
+        gst_number = retainer.customer_name.GST_number
+        place_of_supply = retainer.customer_name.place_of_supply
+        retainer_invoice_date = retainer.retainer_invoice_date
+        
+        if request.method == 'POST':
+            # Process form submission
+            # Update the retainer object with the new data from the form
+            retainer.customer_name = request.POST.get('customer_name')
+            retainer.retainer_invoice_number = request.POST.get('retainer-invoice-number')
+            retainer.invoice_date = request.POST.get('invoicedate')
+            retainer.payment_method = request.POST.get('pay_method')
+            retainer.cheque_number = request.POST.get('chq_no')
+            retainer.upi_id = request.POST.get('upi_id')
+            retainer.bank_account_number = request.POST.get('acc_no')
+            retainer.customer_notes = request.POST.get('customer_notes')
+            retainer.terms_conditions = request.POST.get('terms')
+            retainer.amount_paid = request.POST.get('paid')
+            retainer.balance = request.POST.get('balance')
+            # Update other fields as needed
+            # Save the updated object
+            retainer.save()
+            return redirect('success_page')  # Redirect to a success page
+        else:
+            # Render the edit form with pre-filled data
+            
+            context = {
+                'retainer': retainer,
+                'units': units,
+                'allmodules': allmodules,
+                'accounts': accounts,
+                'customer_name': customer_name,
+                'customer_email': customer_email,
+                'billing_address': billing_address,
+                'gst_treatment': gst_treatment,
+                'gst_number': gst_number,
+                'place_of_supply': place_of_supply,
+                'retainer_invoice_number': retainer.retainer_invoice_number,
+                'reford':retainer.refrences,
+                'retainer_invoice_date': retainer_invoice_date,
+                # Add other context data if needed
+            }
+          
+            return render(request, 'zohomodules/retainer_invoice/retainer_invoice_edit.html', context)
+    else:
+        return redirect('/')  # Redirect to login page if user is not authenticated
 
 
   
