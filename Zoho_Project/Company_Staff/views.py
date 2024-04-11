@@ -13224,6 +13224,8 @@ def create_invoice_draft(request):
     if request.method=='POST':
         # Extract data from the request
         user = request.user
+        company = user.companydetails  # Assuming user has a related CompanyDetails instance
+        logindetails = user.logindetails  # Assuming user has a related LoginDetails instance
         select = request.POST['customer_id']
         customer_name = Customer.objects.get(id=select)
         customer_name11 = customer_name.customerName
@@ -13252,6 +13254,8 @@ def create_invoice_draft(request):
 
         ret_invoice = RetainerInvoice.objects.create(
             user=user,
+            company=company,
+            logindetails=logindetails,
             customer_name=customer_name,
             customer_name1=customer_name1,
             customer_mailid=customer_mailid,
@@ -13266,7 +13270,15 @@ def create_invoice_draft(request):
             advance=paid,
             reford=reford  # Add reference order
         )
-
+        # # Create history entry
+        # history_entry = RetainerInvoiceHistory.objects.create(
+        #     company=company,
+        #     login_details=logindetails,
+        #     retainer_invoice=ret_invoice,
+        #     date=timezone.now(),
+        #     action='Created'
+        # )
+        # history_entry.save()  # Make sure to save the history entry
         # Creating or updating retainer_payment_details
         if pay_opt1:
             if pay_opt1 in ['cash', 'cheque', 'upi']:
@@ -13429,6 +13441,9 @@ def retaineroverview(request, pk=None):
             retainer_id = invoice.id  # Assuming the ID of the RetainerInvoice object is stored in the 'id' attribute
             # Print the retainer object here
             print(invoice)
+             # Fetch history entries for the current retainer invoice
+            # history_entries = RetainerInvoiceHistory.objects.filter(retainer_invoice=invoice)
+
             context = {
                 'details': dash_details,
                 'invoice': invoice,
@@ -13444,6 +13459,7 @@ def retaineroverview(request, pk=None):
                 'billing_address': billing_address,  # Pass billing address to the context
                 'ret_payments': payment_details,
                 'retainer_id': retainer_id,  # Pass the retainer_id to the context
+                # 'history': history_entries,
             }
             return render(request, 'zohomodules/retainer_invoice/retaineroverview.html', context)
         
@@ -13547,11 +13563,21 @@ def retainer_edit_page(request, retainer_id):
         gst_number = retainer.customer_name.GST_number
         place_of_supply = retainer.customer_name.place_of_supply
         retainer_invoice_date = retainer.retainer_invoice_date
+
+        retainer_items = Retaineritems.objects.filter(retainer=retainer)
+        total_amount = retainer.total_amount
+        customer_notes = retainer.customer_notes
+        terms_conditions = retainer.terms_and_conditions
+        balance = retainer.balance
+        
+        payment_methods = ['cash', 'cheque', 'upi']
+        banks = Banking.objects.filter(company=dash_details.company).values_list('bnk_name', flat=True)
+        payment_details = retainer_payment_details.objects.filter(retainer=retainer).first()
         
         if request.method == 'POST':
-            # Process form submission
-            # Update the retainer object with the new data from the form
-            retainer.customer_name = request.POST.get('customer_name')
+            customer_name = request.POST.get('customer_name')
+            customer = Customer.objects.get(customer_display_name=customer_name)
+            retainer.customer_name = customer
             retainer.retainer_invoice_number = request.POST.get('retainer-invoice-number')
             retainer.invoice_date = request.POST.get('invoicedate')
             retainer.payment_method = request.POST.get('pay_method')
@@ -13562,13 +13588,9 @@ def retainer_edit_page(request, retainer_id):
             retainer.terms_conditions = request.POST.get('terms')
             retainer.amount_paid = request.POST.get('paid')
             retainer.balance = request.POST.get('balance')
-            # Update other fields as needed
-            # Save the updated object
             retainer.save()
-            return redirect('success_page')  # Redirect to a success page
+            return redirect('retaineroverview', pk=retainer.id)
         else:
-            # Render the edit form with pre-filled data
-            
             context = {
                 'retainer': retainer,
                 'units': units,
@@ -13583,13 +13605,57 @@ def retainer_edit_page(request, retainer_id):
                 'retainer_invoice_number': retainer.retainer_invoice_number,
                 'reford':retainer.refrences,
                 'retainer_invoice_date': retainer_invoice_date,
-                # Add other context data if needed
+                'payment_methods': payment_methods,
+                'banks': banks,
+                'payment_details': payment_details,
+                'retainer_items': retainer_items,
+                'total_amount': total_amount,
+                'customer_notes': customer_notes,
+                'terms_conditions': terms_conditions,
+                'balance': balance,
             }
           
             return render(request, 'zohomodules/retainer_invoice/retainer_invoice_edit.html', context)
     else:
-        return redirect('/')  # Redirect to login page if user is not authenticated
+        return redirect('/')
 
-
+def delete_retainer(request, retainer_id):
+    try:
+        retainer = RetainerInvoice.objects.get(pk=retainer_id)
+        retainer.delete()
+    except RetainerInvoice.DoesNotExist:
+        pass  # Handle the case where the retainer does not exist
+    return redirect('retainer_list')
   
 
+from .models import RetainerInvoiceComment  # Import the RetainerInvoiceComment model
+
+def addRetainerInvoiceComment(request, retainer_id):  # Change 'id' to 'retainer_id'
+    if 'login_id' in request.session:
+        log_id = request.session['login_id']
+        log_details = LoginDetails.objects.get(id=log_id)
+        if log_details.user_type == 'Company':
+            com = CompanyDetails.objects.get(login_details=log_details)
+        else:
+            com = StaffDetails.objects.get(login_details=log_details).company
+
+        ret_inv = RetainerInvoice.objects.get(id=retainer_id)  # Change 'id' to 'retainer_id'
+        if request.method == "POST":
+            cmt = request.POST.get('comment').strip()
+
+            RetainerInvoiceComment.objects.create(company=com, retainer_invoice=ret_inv, comment=cmt)
+            return redirect(retaineroverview, retainer_id)  # Change 'id' to 'retainer_id'
+        return redirect(retaineroverview, retainer_id)  # Change 'id' to 'retainer_id'
+    return redirect('/')
+
+
+
+def deleteRetainerInvoiceComment(request, id):
+    if 'login_id' in request.session:
+        # Assuming RetainerInvoiceComment is the model for retainer invoice comments
+        comment = RetainerInvoiceComment.objects.get(id=id)  # Use RetainerInvoiceComment instead of RetainerInvoiceComments
+        retainer_id = comment.retainer_invoice.id
+        comment.delete()
+        return redirect(viewRetainerInvoice, retainer_id)
+    else:
+        return redirect('/')

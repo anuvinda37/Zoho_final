@@ -836,6 +836,8 @@ class RetainerInvoice(models.Model):
     is_sent=models.BooleanField(default=False)
     balance=models.CharField(max_length=100,null=True,blank=True)
 
+    
+
 class Retaineritems(models.Model):
     company = models.ForeignKey(CompanyDetails, on_delete=models.CASCADE,null=True,blank=True)
     logindetails = models.ForeignKey(LoginDetails, on_delete=models.CASCADE,null=True,blank=True)
@@ -847,7 +849,8 @@ class Retaineritems(models.Model):
     quantity=models.IntegerField(null=True)
     rate=models.IntegerField(null=True)
     item=models.ForeignKey(Items,on_delete=models.CASCADE,null=True)
-
+    def getNumFieldName(self):
+        return 'retainer_invoice_number'
 
 class retInvoiceReference(models.Model):
     reference = models.BigIntegerField()
@@ -862,3 +865,24 @@ class retainer_payment_details(models.Model):
     upi_id=models.CharField(max_length=100,null=True,blank=True)
     cheque_no=models.CharField(max_length=100,null=True,blank=True)
     bank = models.ForeignKey(Banking,on_delete=models.SET_NULL,null=True,blank=True)
+
+class RetainerInvoiceComment(models.Model):
+    company = models.ForeignKey(CompanyDetails, on_delete=models.CASCADE)
+    retainer_invoice = models.ForeignKey(RetainerInvoice, on_delete=models.CASCADE)
+    comment = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Comment by {self.company} on Retainer Invoice #{self.retainer_invoice.id}"
+
+class RetainerInvoiceHistory(models.Model):
+    company = models.ForeignKey(CompanyDetails, on_delete=models.CASCADE)
+    login_details = models.ForeignKey(LoginDetails, on_delete=models.CASCADE)
+    retainer_invoice = models.ForeignKey(RetainerInvoice, on_delete=models.CASCADE)
+    date = models.DateField(auto_now_add=True)
+    action = models.CharField(max_length=20, null=True)
+
+    def __str__(self):
+        return f"History for Retainer Invoice #{self.retainer_invoice.id}"
+
+    

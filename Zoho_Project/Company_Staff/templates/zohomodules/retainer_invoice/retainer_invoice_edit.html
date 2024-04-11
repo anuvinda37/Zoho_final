@@ -357,58 +357,36 @@ li{
                 </div>
               </div> 
               <br> 
+              {% if payment_details %}
               <div class="form-group row">
-                <div class="col-md-3">
-                  <label for="date2">Payment Method</label>
-                </div>
-        
-                <div class="col-md-6">
-                  <div class="d-flex">
-                    <select class="form-control my-select" id="pay_method" name="pay_method" required style="background-color: black; color: white;">
-                      <option value="" hidden>Select Payment Method</option>
-                      <option value="cash">Cash</option>
-                      <option value="cheque">Cheque</option>
-                      <option value="upi">UPI</option>
-                      {% for bank in banks %}
-                          <option value="{{ bank }}">{{ bank }}</option>
-                      {% endfor %}
-                    </select>
-                  </div>
-                </div>
-              </div>       
-               <br>
-               <div class="form-group row">
-                <div class="row mt-2" id="chequediv" style="display: none;">
-                  <div class="col-md-3">
-                    <label for="date2">Cheque Number</label>
-                  </div>
-          
+                  <label class="col-md-3">Payment Method</label>
                   <div class="col-md-6">
-                    <input type="text" class="form-control text-black" name="chq_no" id="cheque_id"
-                      placeholder="Enter Cheque Number">
+                      <input type="text" class="form-control" value="{{ payment_details.payment_opt }}" readonly>
                   </div>
-                </div>
-          
-                <div class="row mt-2" id="upidiv" style="display: none;">
-                  <div class="col-md-3">
-                    <label for="date2">UPI ID</label>
+              </div>
+              {% if payment_details.payment_opt == 'cheque' %}
+                  <div class="form-group row">
+                      <label class="col-md-3">Cheque Number</label>
+                      <div class="col-md-6">
+                          <input type="text" class="form-control" value="{{ payment_details.cheque_no }}" readonly>
+                      </div>
                   </div>
-          
-                  <div class="col-md-6">
-                    <input type="text" class="form-control text-black" name="upi_id" id="upi_id" placeholder="Enter UPI ID">
+              {% elif payment_details.payment_opt == 'upi' %}
+                  <div class="form-group row">
+                      <label class="col-md-3">UPI ID</label>
+                      <div class="col-md-6">
+                          <input type="text" class="form-control" value="{{ payment_details.upi_id }}" readonly>
+                      </div>
                   </div>
-                </div>
-          
-                <div class="row mt-2" id="bnkdiv" style="display: none;">
-                  <div class="col-md-3">
-                    <label for="date2">Bank Account Number</label>
+              {% elif payment_details.payment_opt != 'cash' %}
+                  <div class="form-group row">
+                      <label class="col-md-3">Bank Account Number</label>
+                      <div class="col-md-6">
+                          <input type="text" class="form-control" value="{{ payment_details.acc_no }}" readonly>
+                      </div>
                   </div>
-          
-                  <div class="col-md-6">
-                    <input type="text" class="form-control text-white" name="acc_no" id="bnk_id" readonly>
-                  </div>
-                </div>
-              </div>        
+              {% endif %}
+          {% endif %}    
               <br><br>    
               
               
@@ -430,29 +408,30 @@ li{
                       </tr>
                     </thead>
                     <tbody id="tbody-table">
+                        {% for item in retainer_items %}
                       <tr class="item-row" id="row1">
                         <td style="border: none;width:3px;" class="index-number">1</td>
                         <td>
                           <select class='form-control border-0 bg-transparent text-white item_select itm' name='item[]'
                             id='item1' onchange="itemfunction(this.id)" style="background-color: black; color: white;">
-                            <option value="" selected hidden>Select Item</option>
-                            {% for i in item %}
-                            <option class="text-black .name" value="{{i.id}}">{{ i.item_name}} </option>
-                            {% endfor %}
+                            <option value="" selected hidden>{{ item.itemname }} </option>
+                           
+                            <option class="text-black .name" value="{{i.id}}"></option>
+                            
                           </select>
                         </td>
                         <td><input type="text" class="form-control bg-transparent border-0 bg-light text-light border-0"
-                            name="description[]" style="width: 60px;" required id="description1" /></td>
+                            name="description[]"  style="width: 60px;"  id="description1" />{{ item.description }}</td>
                         <td><input type="number" name="quantity[]" id="qty1"
                             class="form-control bg-transparent text-white border-0 text-right qty"
-                            style="border: none;width: 100px;" onchange="calculateAmount(1)">
+                            style="border: none;width: 100px;" onchange="calculateAmount(1)">{{ item.quantity }}
                         </td>
                         <td><input type="number" class="rate form-control bg-transparent border-0 bg-light text-light border-0"
-                            name="rate[]" style="width: 80px;" step="0.01" required id="rate1" onchange="calculateAmount(1)"
-                            readonly /></td>
+                            name="rate[]" style="width: 80px;" step="0.01"  id="rate1" onchange="calculateAmount(1)"
+                            readonly />{{ item.rate }}</td>
                         <td><input type="number"
                             class="amount form-control bg-transparent border-0 bg-light text-light border-0" name="amount[]"
-                            style="width: 100px;" step="0.01" required id="amount1" readonly /></td>
+                            style="width: 100px;" step="0.01"  id="amount1" readonly />{{ item.amount }}</td>
                         <td class="text-center" style="display: grid;">
                           <a href="#"
                             class="delete-row btn btn-transparent btn-outline-danger btn-sm rounded-circle text-danger"
@@ -462,6 +441,7 @@ li{
                             style="width: 30px;"><i class="fas fa-clone"></i></a>
                         </td>
                       </tr>
+                      {% endfor %}
                     </tbody>
                     <th>&nbsp;Available Stock: <span id="available_stock"></span></th>
                   </table>
@@ -482,35 +462,36 @@ li{
       <div class="row  border-bottom pb-5">
         <div class="col-sm-5 d-flex flex-column mt-auto">
           <label for="">Customer Notes</label>
-          <textarea cols="8" rows="13" name="customer_notes" id="floatingTextarea"></textarea>
+          <textarea cols="8" rows="13" name="customer_notes" id="floatingTextarea">{{ customer_notes }}</textarea>
 
         </div>
         <div class="col-sm-6 mt-4">
-          <table class="table text-white" style="background-color: rgba(58, 57, 57, 0.8);">
-            <tr>
-              <td>Total</td>
-              <td></td>
-              <td><input type="number" name="total" id="total-amount"
-                  class="form-control bg-transparent border-0 text-right text-white" style="text-align: right;"
-                  readonly></td>
-            </tr>
-            <tr>
-              <td>Paid</td>
-              <td></td>
-              <td><input type="number" name="paid" id="paid"
-                  class="form-control bg-transparent border-0 text-right subtotal text-white" onchange="show_bal()"
-                  style="text-align: right;" value="0">
-                <label for="" id="pay-warning" style="display: none;text-align: right;" class="text-warning"></label>
-              </td>
-            </tr>
-            <tr>
-              <td>Balance</td>
-              <td></td>
-              <td><input type="number" name="balance" id="balance"
-                  class="form-control bg-transparent border-0 text-right text-white" style="text-align: right;"
-                  value="0" readonly></td>
-            </tr>
-          </table>
+            <table class="table text-white" style="background-color: rgba(58, 57, 57, 0.8);">
+                <tr>
+                    <td>Total</td>
+                    <td></td>
+                    <td><input type="number" name="total" id="total-amount"
+                               class="form-control bg-transparent border-0 text-right text-white"
+                               style="text-align: right;" readonly value="{{ total_amount }}"></td>
+                </tr>
+                <tr>
+                    <td>Paid</td>
+                    <td></td>
+                    <td><input type="number" name="paid" id="paid"
+                               class="form-control bg-transparent border-0 text-right subtotal text-white"
+                               onchange="show_bal()" style="text-align: right;" value="{{ amount_paid }}">
+                        <label for="" id="pay-warning" style="display: none;text-align: right;" class="text-warning"></label>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Balance</td>
+                    <td></td>
+                    <td><input type="number" name="balance" id="balance"
+                               class="form-control bg-transparent border-0 text-right text-white"
+                               style="text-align: right;" value="{{ balance }}" readonly></td>
+                </tr>
+            </table>
+            
 
 
 
@@ -522,7 +503,7 @@ li{
       <div class="row border-bottom">
         <div class="col-md-8 d-flex flex-column text-white mb-5">
           <label for="">Terms & Conditions</label>
-          <textarea cols="20" rows="7" name="terms" id="floatingTextarea"></textarea>
+          <textarea cols="20" rows="7" name="terms" id="floatingTextarea">{{ terms_conditions }}</textarea>
 
         </div>
 
@@ -530,11 +511,10 @@ li{
 
 
       <div class="submit row mt-5 mb-3">
-        <button class="btn mt-2" type="submit" name="action" value="draft"
-          style="width: 150px;margin-right: 1vh; background-color: chocolate;" onclick="savedraft()">Draft</button>
-        <button class="btn mt-2" type="submit" name="action" value="send"
-          style="width: 150px;margin-right: 1vh; background-color: chocolate;" onclick="savesend()">Save</button>
-        <button class="btn mt-2" style="width: 150px; background-color: chocolate;" type="reset">Cancel</button><br><br>
+        
+        <button class="btn mt-2" style="width: 150px;margin-right: 1vh; background-color: chocolate;" type="submit"
+        name="action" value="Save">Save</button>
+        
       </div>
               </div>
             </form>

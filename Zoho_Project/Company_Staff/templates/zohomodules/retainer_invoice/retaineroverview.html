@@ -447,8 +447,8 @@
               
       
               <!-- Delete Button -->
-              <a href="" class="delete fa fa-trash btn btn-outline-warning  mt-2 ms-1 btn-sm"
-                  data-toggle="tooltip" title="DELETE" onclick="return confirm('Do you want to Delete this Item?');" style="margin-left: 4px; padding-top: 8px; padding-bottom: 8px;"></a>
+              <a href="{% url 'delete_retainer' retainer_id=invoice.id %}" class="delete fa fa-trash btn btn-outline-warning mt-2 ms-1 btn-sm" data-toggle="tooltip" title="DELETE" onclick="return confirm('Do you want to Delete this Item?');" style="margin-left: 4px; padding-top: 8px; padding-bottom: 8px;"></a>
+
               <!-- Attach button Button -->
               <a class="btn btn-outline-warning small_btn mt-2 ms-1 btn-sm" id="attach_btn" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="fas fa-paperclip" ></i> 
@@ -462,12 +462,20 @@
           </div>
                       
                 
-              <a class="btn btn-outline-warning btn-sm" style="margin-left: 4px; margin-top: 5px;" href="" data-toggle="modal" data-target="#commentModal" data-toggle="tooltip" title="comment">
+              <a class="btn btn-outline-warning btn-sm" style="margin-left: 4px; margin-top: 5px;" id="comment_btn"  href="#commentsModal" data-toggle="modal"   title="COMMENTS">
                 <i class="far fa-comment" style="padding-top: 3px; padding-bottom: 3px; "></i>
               </a>
-              <a class="btn btn-outline-warning btn-sm" style="margin-left: 4px; margin-top: 5px;" href="" data-toggle="modal" data-target="#commentModal2" data-toggle="tooltip" title="history">
+
+
+              
+
+
+              <a class="btn btn-outline-warning btn-sm" style="margin-left: 4px; margin-top: 5px;" id="history_btn"  href="#historyModal" data-toggle="modal"   title="HISTORY">
                 <i class="fa-solid fa-clock-rotate-left"></i>
               </a>
+
+
+              
               
           </div>
       </div>
@@ -1914,8 +1922,47 @@
       </div>
     </div>
   </div>
-  
-  
+  <!-- History Modal  -->
+<div class="modal fade" id="historyModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"  aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content" style="background-color: #3b3b3b;">
+      <div class="modal-header">
+        <h3 class="modal-title text-light" id="exampleModalLabel">HISTORY</h3>
+        <button type="button" class="btn close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true" style="font-size: x-large;">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3" style="background-color: #000000;">
+        <div class="container-fluid history-table-container" >
+          <table class="table text-light table-borderless" style="margin:3px; background-color: #000000;width: 100%;">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Date</th>
+                <th>Action</th>
+                <th>By</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for entry in history %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ entry.date }}</td>
+                <td>{{ entry.action }}</td>
+                <td>{{ entry.login_details.first_name }} {{ entry.login_details.last_name }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>  
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-warning" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
   <div class="modal fade" id="cmt_list">
     <div class="modal-dialog modal-xl">
       <div class="modal-content" style="background: rgb(32, 35, 37);border-radius: 20px;">
@@ -2085,50 +2132,64 @@
     }
   </script>
   
-  <div class="modal fade" id="commentModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"  aria-hidden="true" style="margin-top: 8vh;">
-    <div class="modal-dialog modal-xl">
-      <div class="modal-content" style="background-color: #3b3b3b;">
-        <div class="modal-header">
-          <h3 class="modal-title text-light" id="exampleModalLabel">Add Comments</h3>
-          <button type="button" class="btn close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true" style="font-size: x-large;">&times;</span>
-          </button>
-        </div>
-        <form action="" method="POST" enctype="multipart/form-data">
-          {% csrf_token %}
-          <div class="modal-body">
-            <textarea type="text" class="form-control text-light" name="comment"></textarea>
-            <div class="container-fluid">
-              <table class="table  text-white">
-                <thead>
-                  <tr>
-                    <th style="text-align: center; font-size: large;">sl no.</th>
-                    <th style="text-align: center; font-size: large;">Comments</th>
-                    <th style="text-align: center; font-size: large;">Delete</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for c in est_comments %}
-                    <tr class="table-row">
-                      <td style="text-align: center;">{{forloop.counter }}</td>
-                      <td style="text-align: center;">{{c.comments}}</td>
-                      <td style="text-align: center;">
-                        <a class="text-danger" href="{% url 'delete_item_comment' c.id selitem.id %}"><i class="fa fa-trash" style="font-size:20px;"></i></a>
-                      </td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
+  <!-- Add Comment  -->
+<div class="modal fade" id="commentsModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content" style="background-color: #3b3b3b;">
+      <div class="modal-header">
+        <h3 class="modal-title text-light" id="exampleModalLabel">Add Comments</h3>
+        <button type="button" class="btn close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true" style="font-size: x-large;">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3" style="background-color: #000;">
+        <form action="{% url 'addRetainerInvoiceComment' retainer_id %}" method="post" class="needs-validation" novalidate enctype="multipart/form-data">
+          {%csrf_token%}
+          <div class="row mt-2">
+            <div class="col-12">
+              <textarea type="text" rows="4" class="form-control text-white" name="comment" placeholder="Add Comments.." required></textarea>
+              {% if not comments %}
+                <span class="my-2 font-weight-bold d-flex justify-content-center">No Comments.!</span>
+                {% else %}
+                <div class="container-fluid comments-table-container">
+                    <table class="table table-borderless mt-4">
+                        <thead>
+                            <tr>
+                                <th class="text-center">sl no.</th>
+                                <th class="text-center">Comment</th>
+                                <th class="text-center">Delete</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for c in comments %}
+                            <tr class="">
+                                <td class="text-center">{{forloop.counter }}</td>
+                                <td class="text-center">{{c.comments}}</td>
+                                <td class="text-center"><a class="text-danger" href="{% url 'deleteRetainerInvoiceComment' c.id %}" onclick="return confirm('Are you sure you want to delete.?')"><i class="fa fa-trash" style="font-size: 1.1rem;"></i></a></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
             </div>
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-outline-warning" data-dismiss="modal">Close</button>
-            <button type="submit" class="btn btn-outline-warning">Save</button>
+          <div class="row mt-3">
+            <div class="col-md-4"></div>
+            <div class="col-md-4">
+              <div class="d-flex">
+                <button class="btn save_btn btn-outline-warning mt-2 my-4 mx-2 w-50" type="submit">Save</button> 
+                <input class="btn save_btn btn-outline-warning mt-2 my-4 mx-2 w-50" data-dismiss="modal" type="reset" value="Close">
+              </div>
+            </div>
+            <div class="col-md-4"></div>
           </div>
         </form>
       </div>
+      <div class="modal-footer"></div>
     </div>
   </div>
+</div>
   
   
   <div class="modal fade" id="commentModal2" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"  aria-hidden="true" style="margin-top: 8vh;width: 100%;">
