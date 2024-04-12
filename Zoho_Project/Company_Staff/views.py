@@ -13268,7 +13268,8 @@ def create_invoice_draft(request):
             customer_notes=customer_notes,
             terms_and_conditions=terms_and_conditions,
             advance=paid,
-            reford=reford  # Add reference order
+            reford=reford,  # Add reference order
+            is_draft=True
         )
         # # Create history entry
         # history_entry = RetainerInvoiceHistory.objects.create(
@@ -13355,7 +13356,8 @@ def create_invoice_send(request):
             balance=bal_amount,
             customer_notes=customer_notes,
             terms_and_conditions=terms_and_conditions,
-            advance=paid
+            advance=paid,
+            is_sent=True 
         )
 
         # Save the RetainerInvoice instance

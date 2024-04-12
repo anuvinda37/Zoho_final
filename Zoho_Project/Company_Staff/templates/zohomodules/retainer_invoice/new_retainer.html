@@ -809,17 +809,8 @@ li{
               });
             });
             function savedraft() {
-
               var frm = document.getElementById("home");
-
-              // let customMsg = "Do you want to save as draft?";
-
-              // if (confirm(customMsg)) {
-
               frm.action = ("{% url 'create_invoice_draft' %}")
-              // } else {
-              //   console.log("User Clicked CANCEL");
-              // }
               }
             function savesend() {
               var frm = document.getElementById("home");
