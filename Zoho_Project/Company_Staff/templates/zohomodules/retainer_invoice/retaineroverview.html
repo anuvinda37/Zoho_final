@@ -328,7 +328,7 @@
                </script>
                
                <div class="col-md-3" style="padding-left: 254PX;margin-top:-42px;">
-                   <a class="btn btn btn-outline-warning  btn-sm text-right mt-2" style="height: 35px; padding-top: 10px; padding-left:10px; padding-right:10px;"  style="font-size: small;" href="">
+                   <a class="btn btn btn-outline-warning  btn-sm text-right mt-2" style="height: 35px; padding-top: 10px; padding-left:10px; padding-right:10px;"  style="font-size: small;" href="{% url 'new_retainer'%}">
                        <i class="fa fa-plus"></i>
                    </a>
                </div>
@@ -436,8 +436,14 @@
           <!-- Overview buttons -->
           <!-- Place the buttons you want to show for Overview here -->
      
-        <div class="col-sm-1 " style="margin-left:540px; margin-top:-40px;">
+        <div class="col-sm-1 " style="margin-left:510px; margin-top:-40px;">
           <div class="col-md-6 d-flex justify-content-between align-items-center">
+
+            {% if invoice.status == 'Draft' %}
+            <a class="btn btn-outline-warning small_btn mt-2 ms-1" onclick="convertToSaved({{ invoice.id }})" title="CONVERT" id="convert_btn">
+              <i class="fa fa-exchange"></i>
+            </a>
+            {% endif %}
       
               <!-- Edit Button -->
               <a href="{% url 'retainer_edit_page' retainer_id=retainer_id %}" class="btn btn-outline-warning mt-2 ms-1 btn-sm"  title="Save this draft">
@@ -1848,48 +1854,7 @@
     </div>
   </div>
   
-  <!-- history modal -->
   
-  
-  <div class="modal fade" id="history" >
-    <div class="modal-dialog modal-xl" >
-      <div class="modal-content" style="background: #1f1f1ffd;border-radius: 20px;">
-        <div class="modal-header" style="background: #1f1f1ffd;">
-          <h5 class="m-3 text-uppercase" id="shareBillEmailLabel" style="color: #e1e1e1;">Transaction History</h5>
-          <button type="button" class="close" style="width: 30px;" data-dismiss="modal" aria-label="Close"><span
-              aria-hidden="true">&times;</span></button>
-        </div>
-        <div class="modal-body" style="background: #1f1f1ffd;;">
-          <div class="card p-3 m-3" style="background-color: #000;">
-          
-            <table style="background-color: #000; margin-right: 10px; border-radius: 5px;">
-              <thead class="text-white">
-                  <tr>
-                      <th style="color: rgb(250, 247, 242); padding-bottom: 10px;"><b>Action</b></th>
-                      <th style="color: rgb(244, 244, 244); padding-bottom: 10px;"><b>Date</b></th>
-                      <th style="color: rgb(250, 247, 242); padding-bottom: 10px;"><b>Name</b></th>
-                  </tr>
-                  <tr>
-                      <td colspan="3" style="border-bottom: 2px solid white; margin-bottom: 10px;"></td>
-                  </tr>
-              </thead>
-          
-              <tbody style="background-color: black; padding-top: 20px;"> <!-- Adjusted padding-top for spacing -->
-                  {% for i in latest_item_id %}
-                      <tr style="background-color: black;height: 40px;">
-                          <td class="text-white" style="color: rgb(0, 0, 0); background-color: black; padding-bottom: 10px;">{{ i.action }}</td>            
-                          <td class="text-white" style="color: rgb(0, 0, 0); background-color: black; padding-bottom: 10px;">{{ i.Date }}</td>
-                          <td class="text-white" style="color: rgb(0, 0, 0); background-color: black; padding-bottom: 10px;">{{ i.logindetails.first_name }}&nbsp;{{ i.logindetails.last_name }}</td>
-                      </tr>
-                  {% endfor %}
-              </tbody>
-          </table>
-          
-          </div>
-      </div>
-      
-  </div>
-  </div></div>
   <!-- comment modal -->
   <div class="modal fade" id="cmnts">
     <div class="modal-dialog modal-xl">
@@ -2453,6 +2418,12 @@ function exportToPDF(p) {
     pdftButton.addEventListener("click", function () {
         exportToPDF(rdx); // Call the printSelectedArea function on button click
     });
+    function convertToSaved(invoiceId) {
+  if (confirm('Do you want to convert this Draft to Saved?')) {
+    // Assuming you have a URL named 'convertRecurringInvoice'
+    window.location.href = "{% url 'convertRetainerInvoice' 999 %}".replace('999', invoiceId);
 
+  }
+}
 </script>
 {% endblock %}

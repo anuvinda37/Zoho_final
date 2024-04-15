@@ -84,7 +84,7 @@
                         <span style="font-size: 2vh; margin-left: 0.5rem;" class="text-center">Export</span>
                     </a>
         
-                        <a style="border: 1px solid; border-radius: 5px; height: 2.4rem; display: flex; align-items: center; margin-left: 10px;" class="btn btn-outline-warning"  href="{% url 'new_items' %}">
+                        <a style="border: 1px solid; border-radius: 5px; height: 2.4rem; display: flex; align-items: center; margin-left: 10px;" class="btn btn-outline-warning"  href="{% url 'new_retainer' %}">
                             NEW <i class="fa fa-plus" style="font-size: large;"></i>
                             <span style="font-size: 2vh; margin-left: 0.5rem;" class="text-center"></span>
                         </a>
@@ -240,14 +240,13 @@
           });
         </script>
         <script>
-        function exportToExcel() {
-            var table = document.querySelector('#data-table'); // Add # to select by ID
-            var ws = XLSX.utils.table_to_sheet(table);
-            var wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-            XLSX.writeFile(wb, 'items.xlsx');
-        }
-        
+         function exportToExcel() {
+        var table = document.querySelector('#data-table');
+        var ws = XLSX.utils.table_to_sheet(table);
+        var wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+        XLSX.writeFile(wb, 'Retainer_invoice.xlsx');
+    }
         </script>
         <!-- filter End -->
         

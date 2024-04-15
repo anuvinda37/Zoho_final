@@ -351,6 +351,7 @@ urlpatterns = [
     path('delete_retainer/<int:retainer_id>', views.delete_retainer, name='delete_retainer'),
     path('addRetainerInvoiceComment/<int:retainer_id>/', views.addRetainerInvoiceComment, name='addRetainerInvoiceComment'),
     path('deleteRetainerInvoiceComment/<int:comment_id>/', views.deleteRetainerInvoiceComment, name='deleteRetainerInvoiceComment'),
+    path('convertRetainerInvoice/<int:retainer_id>/', views.convertRetainerInvoice, name='convertRetainerInvoice'),
     re_path(r'^static/(?P<path>.*)$', serve,{'document_root': settings.STATIC_ROOT}),
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS)

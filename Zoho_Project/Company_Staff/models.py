@@ -835,7 +835,8 @@ class RetainerInvoice(models.Model):
     is_draft=models.BooleanField(default=True)
     is_sent=models.BooleanField(default=False)
     balance=models.CharField(max_length=100,null=True,blank=True)
-
+    def getNumFieldName(self):
+        return 'retainer_invoice_number'
     
 
 class Retaineritems(models.Model):
@@ -876,13 +877,9 @@ class RetainerInvoiceComment(models.Model):
         return f"Comment by {self.company} on Retainer Invoice #{self.retainer_invoice.id}"
 
 class RetainerInvoiceHistory(models.Model):
-    company = models.ForeignKey(CompanyDetails, on_delete=models.CASCADE)
-    login_details = models.ForeignKey(LoginDetails, on_delete=models.CASCADE)
-    retainer_invoice = models.ForeignKey(RetainerInvoice, on_delete=models.CASCADE)
-    date = models.DateField(auto_now_add=True)
-    action = models.CharField(max_length=20, null=True)
-
-    def __str__(self):
-        return f"History for Retainer Invoice #{self.retainer_invoice.id}"
+    retainer_invoice = models.ForeignKey('RetainerInvoice', on_delete=models.CASCADE)
+    date = models.DateTimeField(auto_now_add=True)
+    action = models.CharField(max_length=100, default='')  # Provide a default value here
+    # Add any other fields as needed
 
     
