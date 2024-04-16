@@ -13068,51 +13068,73 @@ def retainer_list(request):
         login_id = request.session['login_id']
         if 'login_id' not in request.session:
             return redirect('/')
-        log_details= LoginDetails.objects.get(id=login_id)
+        log_details = LoginDetails.objects.get(id=login_id)
         if log_details.user_type == 'Staff':
-                dash_details = StaffDetails.objects.get(login_details=log_details)
-                item=Items.objects.filter(company=dash_details.company)
-                allmodules= ZohoModules.objects.get(company=dash_details.company,status='New')
-                invoices=RetainerInvoice.objects.filter(user=request.user.id).order_by('-id')
-
-                # Debugging code to check is_sent attribute of invoices
-                for invoice in invoices:
-                    print(f"Invoice {invoice.pk}: is_sent={invoice.is_sent}")
-                content = {
-                        'details': dash_details,
-                        'item':item,
-                        'allmodules': allmodules,
-                        'invoices':invoices,
-                        
-                }
-                return render(request,'zohomodules/retainer_invoice/retainer_list.html',content)
-        if log_details.user_type == 'Company':
+            dash_details = StaffDetails.objects.get(login_details=log_details)
+            item = Items.objects.filter(company=dash_details.company)
+            allmodules = ZohoModules.objects.get(company=dash_details.company, status='New')
+            invoices = RetainerInvoice.objects.filter(user=request.user.id).order_by('-id')
+        elif log_details.user_type == 'Company':
             dash_details = CompanyDetails.objects.get(login_details=log_details)
-            item=Items.objects.filter(company=dash_details)
-            allmodules= ZohoModules.objects.get(company=dash_details,status='New')
-            context = {
-                    'details': dash_details,
-                    'item': item,
-                    'allmodules': allmodules,
-            }
-        return render(request,'zohomodules/retainer_invoice/retainer_list.html',context)
-def new_retainer(request):                                                              
+            item = Items.objects.filter(company=dash_details)
+            allmodules = ZohoModules.objects.get(company=dash_details, status='New')
+            invoices = RetainerInvoice.objects.filter(company=dash_details).order_by('-id')
+        else:
+            return redirect('/')
+        
+        # Prepare the context to pass to the template
+        context = {
+            'details': dash_details,
+            'item': item,
+            'allmodules': allmodules,
+            'invoices': invoices,
+        }
+        
+        # Render the template with the context data
+        return render(request, 'zohomodules/retainer_invoice/retainer_list.html', context)
+    else:
+        return redirect('/')
+
+
+
+from django.shortcuts import render, redirect
+from django.http import JsonResponse
+from datetime import date
+from .models import Items, CompanyDetails, StaffDetails, RetainerInvoice, retInvoiceReference, Banking, LoginDetails, Unit, Chart_of_Accounts, Customer, ZohoModules
+
+def new_retainer(request):
     if 'login_id' in request.session:
         login_id = request.session['login_id']
         if 'login_id' not in request.session:
             return redirect('/')
-    log_details= LoginDetails.objects.get(id=login_id)
-    if log_details.user_type == 'Staff':
-        dash_details = StaffDetails.objects.get(login_details=log_details)
-        item = Items.objects.filter(company=dash_details.company)
-       
-        allmodules = ZohoModules.objects.get(company=dash_details.company,status='New')
-        units = Unit.objects.filter(company=dash_details.company)
-        accounts = Chart_of_Accounts.objects.filter(company=dash_details.company)
+        log_details = LoginDetails.objects.get(id=login_id)
+        # Add print statements or logging here
+        print(request.POST)  # Check if form data is being received
+        print(request.method)  # Check the HTTP method (GET or POST)
+        if log_details.user_type == 'Staff':
+            staff_id = request.session['login_id']
+            try:
+                staff = StaffDetails.objects.get(login_details=log_details)
+                company = staff.company
+                dash_details = staff  # Assign staff details to dash_details
+            except StaffDetails.DoesNotExist:
+                return redirect('/')
+        elif log_details.user_type == 'Company':
+            company_id = request.session['login_id']
+            try:
+                company = CompanyDetails.objects.get(login_details=log_details)
+                dash_details = company  # Assign company details to dash_details
+            except CompanyDetails.DoesNotExist:
+                return redirect('/')
+        else:
+            return redirect('/')
+
+        item = Items.objects.filter(company=company)
+        allmodules = ZohoModules.objects.get(company=company, status='New')
+        units = Unit.objects.filter(company=company)
+        accounts = Chart_of_Accounts.objects.filter(company=company)
         customers = Customer.objects.all()
         last_record = RetainerInvoice.objects.filter(logindetails=log_details).last()
-
-        last_reference = retInvoiceReference.objects.filter(logindetails=request.user.id).last()
 
         next_ret_number = ''  # Initialize next_ret_number with a default value
         lastSalesNo = ''
@@ -13143,6 +13165,8 @@ def new_retainer(request):
                     reference = remaining_characters+'0'+str(last_two_numbers)
                 else:
                     reference = remaining_characters+str(last_two_numbers)
+        
+        last_reference = retInvoiceReference.objects.filter(logindetails=request.user.id).last()
         if last_reference == None:
             reford = '01'
         else:
@@ -13151,7 +13175,7 @@ def new_retainer(request):
             else:
                 reford = str(last_reference.reference+1)
         
-        banks = Banking.objects.filter(company=dash_details.company).values_list('bnk_name', flat=True)
+        banks = Banking.objects.filter(company=company).values_list('bnk_name', flat=True)
 
         context = {
             'details': dash_details,
@@ -13162,11 +13186,87 @@ def new_retainer(request):
             'reford': reford,
             'reference': reference,
             'remaining_characters': remaining_characters,
-            'next_ret_number': next_ret_number,  # Include next_ret_number in the context
-            'item':item,
+            'next_ret_number': next_ret_number,
+            'item': item,
             'banks': banks,
         }
         return render(request, 'zohomodules/retainer_invoice/new_retainer.html', context)
+    else:
+        return redirect('/')
+
+
+# def new_retainer(request):                                                              
+#     if 'login_id' in request.session:
+#         login_id = request.session['login_id']
+#         if 'login_id' not in request.session:
+#             return redirect('/')
+#     log_details= LoginDetails.objects.get(id=login_id)
+#     if log_details.user_type == 'Staff':
+#         dash_details = StaffDetails.objects.get(login_details=log_details)
+#         item = Items.objects.filter(company=dash_details.company)
+       
+#         allmodules = ZohoModules.objects.get(company=dash_details.company,status='New')
+#         units = Unit.objects.filter(company=dash_details.company)
+#         accounts = Chart_of_Accounts.objects.filter(company=dash_details.company)
+#         customers = Customer.objects.all()
+#         last_record = RetainerInvoice.objects.filter(logindetails=log_details).last()
+
+#         last_reference = retInvoiceReference.objects.filter(logindetails=request.user.id).last()
+
+#         next_ret_number = ''  # Initialize next_ret_number with a default value
+#         lastSalesNo = ''
+#         if last_record == None:
+#             reference = '01'
+#             remaining_characters = ''
+#         else:
+#             lastSalesNo = last_record.retainer_invoice_number
+#             last_two_numbers = int(lastSalesNo[-2:])+1
+#             for i in range(len(lastSalesNo)-1,-1,-1):
+#                 if not lastSalesNo[i].isdigit():
+#                     last_digit_index=i+1
+#                     break
+#             prefix=lastSalesNo[:last_digit_index]
+#             number=int(lastSalesNo[last_digit_index:])
+#             number+=1
+#             enumber=str(number).zfill(3)
+#             next_ret_number=f"{prefix}{enumber}"
+#             last_two_numbers = int(lastSalesNo[-2:])+1
+#             remaining_characters = lastSalesNo[:-2]  
+#             if remaining_characters == '':
+#                 if last_two_numbers < 10:
+#                     reference = '0'+str(last_two_numbers)
+#                 else:
+#                     reference = str(last_two_numbers)
+#             else:
+#                 if last_two_numbers < 10:
+#                     reference = remaining_characters+'0'+str(last_two_numbers)
+#                 else:
+#                     reference = remaining_characters+str(last_two_numbers)
+#         if last_reference == None:
+#             reford = '01'
+#         else:
+#             if last_reference.reference+1 < 10:
+#                 reford = '0'+ str(last_reference.reference+1)
+#             else:
+#                 reford = str(last_reference.reference+1)
+        
+#         banks = Banking.objects.filter(company=dash_details.company).values_list('bnk_name', flat=True)
+
+#         context = {
+#             'details': dash_details,
+#             'units': units,
+#             'allmodules': allmodules,
+#             'accounts': accounts,
+#             'customer1': customers,
+#             'reford': reford,
+#             'reference': reference,
+#             'remaining_characters': remaining_characters,
+#             'next_ret_number': next_ret_number,  # Include next_ret_number in the context
+#             'item':item,
+#             'banks': banks,
+#         }
+#         return render(request, 'zohomodules/retainer_invoice/new_retainer.html', context)
+    
 
 
 def get_customer_details(request):
