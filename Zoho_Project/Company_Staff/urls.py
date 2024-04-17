@@ -352,6 +352,22 @@ urlpatterns = [
     path('addRetainerInvoiceComment/<int:retainer_id>/', views.addRetainerInvoiceComment, name='addRetainerInvoiceComment'),
     path('deleteRetainerInvoiceComment/<int:comment_id>/', views.deleteRetainerInvoiceComment, name='deleteRetainerInvoiceComment'),
     path('convertRetainerInvoice/<int:retainer_id>/', views.convertRetainerInvoice, name='convertRetainerInvoice'),
+    path('Company/save_new_itm',views.createNewItemAjax, name='createNewItemAjax'),
+    path('Company/get_all_itms',views.getAllItemsAjax, name='getAllItemsAjax'),
+    path('Company/create_new_acc',views.createNewAccountAjax, name= 'createNewAccountAjax'),
+    path('Company/get_all_accnts',views.getAllAccountsAjax, name='getAllAccountsAjax'),
+
+     path('Company/get_cust_details',views.getCustomerDetailsAjax, name='getCustomerDetailsAjax'),
+    path('Company/get_bank_acc_num',views.getBankAccountNumberAjax, name='getBankAccountNumberAjax'),
+    path('Company/get_itm_details',views.getItemDetailsAjax, name='getItemDetailsAjax'),
+    
+
+    path('Company/get_all_cust',views.getCustomersAjax, name='getCustomersAjax'),
+    path('Company/get_units_ajax',views.getUnitsAjax, name='getUnitsAjax'),
+    path('Company/save_new_itm',views.createNewItemAjax, name='createNewItemAjax'),
+    path('Company/new_sales_customer_ajax',views.newSalesCustomerAjax, name='newSalesCustomerAjax'),
+
+    path('Company/new_pymnt_trm',views.newPaymentTermAjax, name='newPaymentTermAjax'),
     re_path(r'^static/(?P<path>.*)$', serve,{'document_root': settings.STATIC_ROOT}),
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS)
