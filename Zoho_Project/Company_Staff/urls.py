@@ -337,6 +337,9 @@ urlpatterns = [
     path('godownmodal_unit_edit/<int:pk>',views.godownmodal_unit_edit,name='godownmodal_unit_edit'),
     path('Add_Account_Edit/<int:pk>',views.Add_Account_Edit,name='Add_Account_Edit'),
     path('delete_godown/<int:pk>',views.delete_godown,name='delete_godown'),
+
+
+
     path('retainer_list',views.retainer_list,name='retainer_list'),
     path('new_retainer',views.new_retainer,name='new_retainer'),
     path('get_customer_details/', views.get_customer_details, name='get_customer_details'),
@@ -368,6 +371,8 @@ urlpatterns = [
     path('Company/new_sales_customer_ajax',views.newSalesCustomerAjax, name='newSalesCustomerAjax'),
 
     path('Company/new_pymnt_trm',views.newPaymentTermAjax, name='newPaymentTermAjax'),
+
+    path('retainer/<int:retainer_id>/history/', views.retainer_history, name='retainer_history'),
     re_path(r'^static/(?P<path>.*)$', serve,{'document_root': settings.STATIC_ROOT}),
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS)

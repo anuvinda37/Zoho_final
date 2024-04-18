@@ -13430,147 +13430,184 @@ def get_bank_details(request):
 
 from django.shortcuts import redirect
 from .models import Retaineritems
+from django.contrib.auth.models import AnonymousUser
 def create_invoice_draft(request):
-    if request.method == 'POST':
-        # Extract data from the request
-        customer_id = request.POST.get('customer_id')
-        customer_mailid = request.POST.get('cx_mail')
-        retainer_invoice_number = request.POST.get('retainer-invoice-number')
-        references = request.POST.get('references')
-        retainer_invoice_date = request.POST.get('invoicedate')
-        total_amount = request.POST.get('total')
-        bal_amount = request.POST.get('balance')
-        customer_notes = request.POST.get('customer_notes')
-        terms_and_conditions = request.POST.get('terms')
-        paid = request.POST.get('paid')
-        pay_method = request.POST.get('pay_method')
-        acc_no = request.POST.get('acc_no', '')
-        cheque_no = request.POST.get('chq_no', '')
-        upi_id = request.POST.get('upi_id', '')
+    if 'login_id' in request.session:
+        if request.session.has_key('login_id'):
+            log_id = request.session['login_id']           
+        else:
+            return redirect('/')
+        
+        log_details= LoginDetails.objects.get(id=log_id)
+        
+        if log_details.user_type=='Staff':
+            staff_details=StaffDetails.objects.get(login_details=log_details)
+            dash_details = CompanyDetails.objects.get(id=staff_details.company.id)
+        else:    
+            dash_details = CompanyDetails.objects.get(login_details=log_details)
+        
+        if request.method == 'POST':
+            # Extract data from the request
+            customer_id = request.POST.get('customer_id')
+            customer_mailid = request.POST.get('cx_mail')
+            retainer_invoice_number = request.POST.get('retainer-invoice-number')
+            references = request.POST.get('references')
+            retainer_invoice_date = request.POST.get('invoicedate')
+            total_amount = request.POST.get('total')
+            bal_amount = request.POST.get('balance')
+            customer_notes = request.POST.get('customer_notes')
+            terms_and_conditions = request.POST.get('terms')
+            paid = request.POST.get('paid')
+            pay_method = request.POST.get('pay_method')
+            acc_no = request.POST.get('acc_no', '')
+            cheque_no = request.POST.get('chq_no', '')
+            upi_id = request.POST.get('upi_id', '')
 
-        # Create a new instance of RetainerInvoice
-        retainer_invoice = RetainerInvoice(
-            customer_name_id=customer_id,  # Assuming customer_name is a ForeignKey
-            customer_mailid=customer_mailid,
-            retainer_invoice_number=retainer_invoice_number,
-            refrences=references,
-            retainer_invoice_date=retainer_invoice_date,
-            total_amount=total_amount,
-            balance=bal_amount,
-            customer_notes=customer_notes,
-            terms_and_conditions=terms_and_conditions,
-            advance=paid,
-            is_sent=False 
-        )
+            # Ensure request.user is a User instance
+            created_by = request.user if isinstance(request.user, User) else None
 
-        # Save the RetainerInvoice instance
-        retainer_invoice.save()
-
-        # Optionally, create and save a RetainerPaymentDetails instance
-        if pay_method:
-            ret_payment = retainer_payment_details(
-                retainer=retainer_invoice,
-                payment_opt=pay_method,
-                acc_no=acc_no,
-                cheque_no=cheque_no,
-                upi_id=upi_id
-            )
-            ret_payment.save()
-
-        # Save Retaineritems instances for each item received in the POST request
-        description = request.POST.getlist('description[]')
-        amount = request.POST.getlist('amount[]')
-        item_ids = request.POST.getlist('item[]')
-        qty = request.POST.getlist('quantity[]')
-        rate = request.POST.getlist('rate[]')
-
-        for i in range(len(description)):
-            item = Items.objects.get(id=item_ids[i])
-            Retaineritems.objects.create(
-                retainer=retainer_invoice,
-                description=description[i],
-                amount=amount[i],
-                itemname=item.item_name,  # Assign the item name properly
-                quantity=qty[i],
-                rate=rate[i]
+            # Create a new instance of RetainerInvoice
+            retainer_invoice = RetainerInvoice(
+                customer_name_id=customer_id,  # Assuming customer_name is a ForeignKey
+                customer_mailid=customer_mailid,
+                retainer_invoice_number=retainer_invoice_number,
+                refrences=references,
+                retainer_invoice_date=retainer_invoice_date,
+                total_amount=total_amount,
+                balance=bal_amount,
+                customer_notes=customer_notes,
+                terms_and_conditions=terms_and_conditions,
+                advance=paid,
+                is_sent=False,
+                created_by=created_by
             )
 
-        # Redirect to retainer_list.html after saving
-        return redirect('retainer_list')
+            # Save the RetainerInvoice instance
+            retainer_invoice.save()
 
-    else:
-        return HttpResponse("Invalid request")
+            # Optionally, create and save a RetainerPaymentDetails instance
+            if pay_method:
+                ret_payment = retainer_payment_details(
+                    retainer=retainer_invoice,
+                    payment_opt=pay_method,
+                    acc_no=acc_no,
+                    cheque_no=cheque_no,
+                    upi_id=upi_id
+                )
+                ret_payment.save()
+
+            # Save Retaineritems instances for each item received in the POST request
+            description = request.POST.getlist('description[]')
+            amount = request.POST.getlist('amount[]')
+            item_ids = request.POST.getlist('item[]')
+            qty = request.POST.getlist('quantity[]')
+            rate = request.POST.getlist('rate[]')
+
+            for i in range(len(description)):
+                item = Items.objects.get(id=item_ids[i])
+                Retaineritems.objects.create(
+                    retainer=retainer_invoice,
+                    description=description[i],
+                    amount=amount[i],
+                    itemname=item.item_name,  # Assign the item name properly
+                    quantity=qty[i],
+                    rate=rate[i]
+                )
+
+            # Redirect to retainer_list.html after saving
+            return redirect('retainer_list')
+
+        else:
+            return HttpResponse("Invalid request")
 
 def create_invoice_send(request):
-    if request.method == 'POST':
-        # Extract data from the request
-        customer_id = request.POST.get('customer_id')
-        customer_mailid = request.POST.get('cx_mail')
-        retainer_invoice_number = request.POST.get('retainer-invoice-number')
-        references = request.POST.get('references')
-        retainer_invoice_date = request.POST.get('invoicedate')
-        total_amount = request.POST.get('total')
-        bal_amount = request.POST.get('balance')
-        customer_notes = request.POST.get('customer_notes')
-        terms_and_conditions = request.POST.get('terms')
-        paid = request.POST.get('paid')
-        pay_method = request.POST.get('pay_method')
-        acc_no = request.POST.get('acc_no', '')
-        cheque_no = request.POST.get('chq_no', '')
-        upi_id = request.POST.get('upi_id', '')
+    if 'login_id' in request.session:
+        if request.session.has_key('login_id'):
+            log_id = request.session['login_id']
+        else:
+            return redirect('/')
+        
+        log_details= LoginDetails.objects.get(id=log_id)
+        
+        if log_details.user_type=='Staff':
+            staff_details=StaffDetails.objects.get(login_details=log_details)
+            dash_details = CompanyDetails.objects.get(id=staff_details.company.id)
+        else:    
+            dash_details = CompanyDetails.objects.get(login_details=log_details)
+        
+        if request.method == 'POST':
+            # Extract data from the request
+            customer_id = request.POST.get('customer_id')
+            customer_mailid = request.POST.get('cx_mail')
+            retainer_invoice_number = request.POST.get('retainer-invoice-number')
+            references = request.POST.get('references')
+            retainer_invoice_date = request.POST.get('invoicedate')
+            total_amount = request.POST.get('total')
+            bal_amount = request.POST.get('balance')
+            customer_notes = request.POST.get('customer_notes')
+            terms_and_conditions = request.POST.get('terms')
+            paid = request.POST.get('paid')
+            pay_method = request.POST.get('pay_method')
+            acc_no = request.POST.get('acc_no', '')
+            cheque_no = request.POST.get('chq_no', '')
+            upi_id = request.POST.get('upi_id', '')
 
-        # Create a new instance of RetainerInvoice
-        retainer_invoice = RetainerInvoice(
-            customer_name_id=customer_id,  # Assuming customer_name is a ForeignKey
-            customer_mailid=customer_mailid,
-            retainer_invoice_number=retainer_invoice_number,
-            refrences=references,
-            retainer_invoice_date=retainer_invoice_date,
-            total_amount=total_amount,
-            balance=bal_amount,
-            customer_notes=customer_notes,
-            terms_and_conditions=terms_and_conditions,
-            advance=paid,
-            is_sent=True 
-        )
+            # Ensure request.user is a User instance
+            created_by = request.user if isinstance(request.user, User) else None
 
-        # Save the RetainerInvoice instance
-        retainer_invoice.save()
-
-        # Optionally, create and save a RetainerPaymentDetails instance
-        if pay_method:
-            ret_payment = retainer_payment_details(
-                retainer=retainer_invoice,
-                payment_opt=pay_method,
-                acc_no=acc_no,
-                cheque_no=cheque_no,
-                upi_id=upi_id
-            )
-            ret_payment.save()
-
-        # Save Retaineritems instances for each item received in the POST request
-        description = request.POST.getlist('description[]')
-        amount = request.POST.getlist('amount[]')
-        item_ids = request.POST.getlist('item[]')
-        qty = request.POST.getlist('quantity[]')
-        rate = request.POST.getlist('rate[]')
-
-        for i in range(len(description)):
-            item = Items.objects.get(id=item_ids[i])
-            Retaineritems.objects.create(
-                retainer=retainer_invoice,
-                description=description[i],
-                amount=amount[i],
-                itemname=item.item_name,  # Assign the item name properly
-                quantity=qty[i],
-                rate=rate[i]
+            # Create a new instance of RetainerInvoice
+            retainer_invoice = RetainerInvoice(
+                customer_name_id=customer_id,  # Assuming customer_name is a ForeignKey
+                customer_mailid=customer_mailid,
+                retainer_invoice_number=retainer_invoice_number,
+                refrences=references,
+                retainer_invoice_date=retainer_invoice_date,
+                total_amount=total_amount,
+                balance=bal_amount,
+                customer_notes=customer_notes,
+                terms_and_conditions=terms_and_conditions,
+                advance=paid,
+                is_sent=True,  # Assuming this is correct for create_invoice_send
+                created_by=created_by
             )
 
-        # Redirect to retainer_list.html after saving
-        return redirect('retainer_list')
+            # Save the RetainerInvoice instance
+            retainer_invoice.save()
 
-    else:
-        return HttpResponse("Invalid request")
+            # Optionally, create and save a RetainerPaymentDetails instance
+            if pay_method:
+                ret_payment = retainer_payment_details(
+                    retainer=retainer_invoice,
+                    payment_opt=pay_method,
+                    acc_no=acc_no,
+                    cheque_no=cheque_no,
+                    upi_id=upi_id
+                )
+                ret_payment.save()
+
+            # Save Retaineritems instances for each item received in the POST request
+            description = request.POST.getlist('description[]')
+            amount = request.POST.getlist('amount[]')
+            item_ids = request.POST.getlist('item[]')
+            qty = request.POST.getlist('quantity[]')
+            rate = request.POST.getlist('rate[]')
+
+            for i in range(len(description)):
+                item = Items.objects.get(id=item_ids[i])
+                Retaineritems.objects.create(
+                    retainer=retainer_invoice,
+                    description=description[i],
+                    amount=amount[i],
+                    itemname=item.item_name,  # Assign the item name properly
+                    quantity=qty[i],
+                    rate=rate[i]
+                )
+
+            # Redirect to retainer_list.html after saving
+            return redirect('retainer_list')
+
+        else:
+            return HttpResponse("Invalid request")
 
 from django.contrib.auth.models import User
 from django.shortcuts import render
@@ -13602,7 +13639,7 @@ def retaineroverview(request, pk=None):
 
                 
             invoice = RetainerInvoice.objects.get(pk=pk)
-            hist = RetainerInvoiceHistory.objects.filter(retainer_invoice=invoice)
+          
             
             items = Retaineritems.objects.filter(retainer=invoice)
             payment_details = retainer_payment_details.objects.filter(retainer=invoice).first()  # Fetch payment details for the invoice
@@ -13617,13 +13654,12 @@ def retaineroverview(request, pk=None):
             retainer_id = invoice.id  # Assuming the ID of the RetainerInvoice object is stored in the 'id' attribute
             # Print the retainer object here
             print(invoice)
-             # Fetch history entries for the current retainer invoice
-            # history_entries = RetainerInvoiceHistory.objects.filter(retainer_invoice=invoice)
+             
 
             context = {
                 'details': dash_details,
                 'invoice': invoice,
-                'history': hist,
+                
                 'units': units,
                 'allmodules': allmodules,
                 'accounts': accounts,
@@ -13636,7 +13672,7 @@ def retaineroverview(request, pk=None):
                 'billing_address': billing_address,  # Pass billing address to the context
                 'ret_payments': payment_details,
                 'retainer_id': retainer_id,  # Pass the retainer_id to the context
-                # 'history': history_entries,
+               
             }
             return render(request, 'zohomodules/retainer_invoice/retaineroverview.html', context)
         
@@ -13733,6 +13769,7 @@ def retainer_edit_page(request, retainer_id):
         accounts = Chart_of_Accounts.objects.filter(company=dash_details.company)
         
         retainer = RetainerInvoice.objects.get(pk=retainer_id)
+        retainer.modified_by = request.user
         customer_name = retainer.customer_name.customer_display_name
         customer_email = retainer.customer_name.customer_email
         billing_address = retainer.customer_name.billing_address
@@ -14425,3 +14462,15 @@ def newPaymentTermAjax(request):
 
     else:
         return redirect('/')
+def retainer_history(request, retainer_id):
+    try:
+        retainer = RetainerInvoice.objects.get(pk=retainer_id)
+        history = {
+            'created_by': retainer.created_by.username if retainer.created_by else None,
+            'created_at': retainer.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'modified_by': retainer.modified_by.username if retainer.modified_by else None,
+            'modified_at': retainer.modified_at.strftime('%Y-%m-%d %H:%M:%S')
+        }
+        return JsonResponse({'history': history})
+    except RetainerInvoice.DoesNotExist:
+        return JsonResponse({'error': 'Retainer invoice does not exist'}, status=404)

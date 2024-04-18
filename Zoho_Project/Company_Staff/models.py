@@ -817,6 +817,9 @@ class GodownComments(models.Model):
     login_details = models.ForeignKey(LoginDetails, on_delete=models.CASCADE,null=True,blank=True)
     godown = models.ForeignKey(Godown, on_delete=models.CASCADE,null=True,blank=True)
     comment = models.CharField(max_length = 250)
+
+from django.utils import timezone
+
 class RetainerInvoice(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, default=None)
     company = models.ForeignKey(CompanyDetails, on_delete=models.CASCADE,null=True,blank=True)
@@ -835,6 +838,10 @@ class RetainerInvoice(models.Model):
     is_draft=models.BooleanField(default=True)
     is_sent=models.BooleanField(default=False)
     balance=models.CharField(max_length=100,null=True,blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='retainer_created', null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    modified_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='retainer_modified', null=True, blank=True)
+    modified_at = models.DateTimeField(auto_now=True)
     def getNumFieldName(self):
         return 'retainer_invoice_number'
     
@@ -876,10 +883,9 @@ class RetainerInvoiceComment(models.Model):
     def __str__(self):
         return f"Comment by {self.company} on Retainer Invoice #{self.retainer_invoice.id}"
 
-class RetainerInvoiceHistory(models.Model):
-    retainer_invoice = models.ForeignKey('RetainerInvoice', on_delete=models.CASCADE)
-    date = models.DateTimeField(auto_now_add=True)
-    action = models.CharField(max_length=100, default='')  # Provide a default value here
-    # Add any other fields as needed
+
+
+
+
 
     

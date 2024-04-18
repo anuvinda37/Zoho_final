@@ -511,8 +511,8 @@
       <a class="btn btn-outline-warning btn-sm" style="margin-left: 4px; margin-top: 5px;" href="" data-toggle="modal" data-target="#commentModal" data-toggle="tooltip" title="comment">
         <i class="far fa-comment" style="padding-top: 3px; padding-bottom: 3px; "></i>
       </a>
-      <a class="btn btn-outline-warning btn-sm" style="margin-left: 4px; margin-top: 5px;" href="" data-toggle="modal" data-target="#commentModal2" data-toggle="tooltip" title="history">
-        <i class="fa-solid fa-clock-rotate-left"></i>
+      <!-- <a class="btn btn-outline-warning btn-sm" style="margin-left: 4px; margin-top: 5px;" href="" data-toggle="modal" data-target="#commentModal2" data-toggle="tooltip" title="history">
+        <i class="fa-solid fa-clock-rotate-left"></i> -->
       </a>
       </div>
       </div>
@@ -1909,15 +1909,16 @@
               </tr>
             </thead>
             <tbody>
+              <!-- Loop through history entries -->
               {% for entry in history %}
               <tr>
-                <td>{{ forloop.counter }}</td>
-                <td>{{ entry.date }}</td>
-                <td>{{ entry.action }}</td>
-                <td>{{ entry.login_details.first_name }} {{ entry.login_details.last_name }}</td>
+                <td>{{ forloop.counter }}</td> <!-- Incremental number -->
+                <td>{{ entry.date }}</td> <!-- Date of the history entry -->
+                <td>{{ entry.action }}</td> <!-- Action performed -->
+                <td>{{ entry.by.username }}</td> <!-- Username of the user who performed the action -->
               </tr>
               {% endfor %}
-            </tbody>  
+            </tbody>
           </table>
         </div>
       </div>
@@ -2425,5 +2426,29 @@ function exportToPDF(p) {
 
   }
 }
+
+$(document).ready(function(){
+    $('#history_btn').on('click', function() {
+        var retainerId = $(this).data('retainer-id');
+        $.ajax({
+          url: '/retainer/' + retainerId + '/history/',
+            type: 'GET',
+            success: function(data) {
+                // Update the modal content with history data
+                $('#historyModal .modal-body').html(
+                    '<p>Created By: ' + data.history.created_by + '</p>' +
+                    '<p>Created At: ' + data.history.created_at + '</p>' +
+                    '<p>Modified By: ' + data.history.modified_by + '</p>' +
+                    '<p>Modified At: ' + data.history.modified_at + '</p>'
+                );
+            },
+            error: function(xhr, status, error) {
+                // Handle error
+            }
+        });
+    });
+});
+
 </script>
+
 {% endblock %}
