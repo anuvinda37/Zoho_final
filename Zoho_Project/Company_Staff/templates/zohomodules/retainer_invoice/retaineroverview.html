@@ -26,6 +26,47 @@
 
                                                 
                                                 <style>
+                                                  
+
+                                                  .logo img {
+        max-height: 100px;
+    }
+    .company-info h2 {
+        margin: 0;
+        font-size: 2em;
+    }
+    .company-info p {
+        margin: 0;
+        line-height: 1.5;
+    }
+    .i.invoice-box {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .invoice-box h1 {
+        font-size: 2em;
+        margin-bottom: 20px;
+    }
+
+    .invoice-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .invoice-details p,
+    .client-details p {
+        margin: 5px 0;
+    }
+
+
+
+
+
                                                   .bs{
                                                       box-shadow: 2px 2px 10px 3px rgba(0, 0, 0, 0.397);
                                                   }
@@ -251,6 +292,21 @@
                                                       margin-left: 230px;
                                                         line-height: 1.5;
                                                     }
+                                                    .equal-length-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 100%;
+        /* Make the container fill the height of the column */
+        margin-left: 2vh;
+        margin-right: 2vh;
+    }
+
+    .equal-length-item {
+        flex: 1;
+        text-align: center;
+    }
+
                                                   </style>
                                                   
                                                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-xxxxxx" crossorigin="anonymous" />
@@ -298,8 +354,9 @@
                        
                        <div class="dropdown-menu m-1" style="background-color: black; color: white;">
                         <a class="dropdown-item text-white" href="">All</a>
-                        <a class="dropdown-item text-white" href="">Item Name</a>
-                        <a class="dropdown-item text-white" href="">HSN</a>
+                        <a class="dropdown-item text-white" href="">Name</a>
+                        <a class="dropdown-item text-white" href="">Retainer Invoice
+                          Number</a>
                        </div>
                    </div>
                </div>
@@ -362,7 +419,7 @@
                      </td>
                      
                      <td>
-                      {% if invoices.is_draft == 1 %}
+                      {% if invoice.is_sent == False %}
                 <label class="text-end d-block text-white">Draft</label>
                 {% else %}
                 <label class="text-end d-block text-white">Send</label>
@@ -397,12 +454,12 @@
             
 
 
-            <a class="btn btn-outline-warning xsmall_btn ms-1"  href=" "  data-bs-toggle="dropdown"
+            <a class="btn btn-outline-warning xsmall_btn ms-1" onclick="template_function()"  data-bs-toggle="dropdown"
             id="attachmentDropdown" aria-haspopup="true" aria-expanded="false"
             ><i class="fa fa-file-alt"></i> Templates
         </a>
 
-        <div class="dropdown-menu" aria-labelledby="attachmentDropdown">
+        <!-- <div class="dropdown-menu" aria-labelledby="attachmentDropdown">
             <a class="dropdown-item" onclick="template_function()"><i
                     class="fa fa-file-alt"></i> Template 1</a>
 
@@ -411,7 +468,7 @@
 
             <a class="dropdown-item" onclick="show_template3()"><i class="fa fa-file-alt"></i>
                 Template 3</a>
-        </div>
+        </div> -->
 
         <button class="btn btn-outline-warning print-button" data-toggle="tooltip" title="Slip"
                                     onclick="show_slip()">
@@ -436,14 +493,16 @@
           <!-- Overview buttons -->
           <!-- Place the buttons you want to show for Overview here -->
      
-        <div class="col-sm-1 " style="margin-left:510px; margin-top:-40px;">
+        <div class="col-sm-1 " style="margin-left:495px; margin-top:-40px;">
           <div class="col-md-6 d-flex justify-content-between align-items-center">
 
-            {% if invoice.status == 'Draft' %}
-            <a class="btn btn-outline-warning small_btn mt-2 ms-1" onclick="convertToSaved({{ invoice.id }})" title="CONVERT" id="convert_btn">
-              <i class="fa fa-exchange"></i>
+            {% if invoice.is_sent == False %}
+            <a class="btn btn-outline-warning btn-sm mt-2 ms-1" onclick="convertToSaved({{ invoice.id }})" title="CONVERT" id="convert_btn">
+                <i style="height:5px;" class="fa fa-exchange"></i>
             </a>
-            {% endif %}
+        {% endif %}
+        
+
       
               <!-- Edit Button -->
               <a href="{% url 'retainer_edit_page' retainer_id=retainer_id %}" class="btn btn-outline-warning mt-2 ms-1 btn-sm"  title="Save this draft">
@@ -511,8 +570,9 @@
       <a class="btn btn-outline-warning btn-sm" style="margin-left: 4px; margin-top: 5px;" href="" data-toggle="modal" data-target="#commentModal" data-toggle="tooltip" title="comment">
         <i class="far fa-comment" style="padding-top: 3px; padding-bottom: 3px; "></i>
       </a>
-      <!-- <a class="btn btn-outline-warning btn-sm" style="margin-left: 4px; margin-top: 5px;" href="" data-toggle="modal" data-target="#commentModal2" data-toggle="tooltip" title="history">
-        <i class="fa-solid fa-clock-rotate-left"></i> -->
+      <a class="btn btn-outline-warning btn-sm" style="margin-left: 4px; margin-top: 5px;" id="history_btn"  href="#historyModal" data-toggle="modal"   title="HISTORY">
+        <i class="fa-solid fa-clock-rotate-left"></i>
+      </a>
       </a>
       </div>
       </div>
@@ -527,7 +587,7 @@
     <a class="btn btn-outline-warning btn-sm" style="margin-left: 4px; margin-top: 5px;" href="" data-toggle="modal" data-target="#commentModal" data-toggle="tooltip" title="comment">
       <i class="far fa-comment" style="padding-top: 3px; padding-bottom: 3px; "></i>
     </a>
-    <a class="btn btn-outline-warning btn-sm" style="margin-left: 4px; margin-top: 5px;" href="" data-toggle="modal" data-target="#commentModal2" data-toggle="tooltip" title="history">
+    <a class="btn btn-outline-warning btn-sm" style="margin-left: 4px; margin-top: 5px;" id="history_btn"  href="#historyModal" data-toggle="modal"   title="HISTORY">
       <i class="fa-solid fa-clock-rotate-left"></i>
     </a>
     </div>
@@ -947,6 +1007,12 @@
               </section>
 
           </div>
+          
+      </div>
+      <div id="templateToggle" class="templateToggleSegment mt-3 mb-0 w-100 d-flex justify-content-center">
+        <button id="toggleTemplate1" onclick="template_function()" class="btn btn-outline-warning btn-sm m-2 active templateToggleButtons">1</button>
+        <button id="toggleTemplate2" onclick="show_template2()" class="btn btn-outline-warning btn-sm m-2 templateToggleButtons">2</button>
+        <button id="toggleTemplate3" onclick="show_template3()" class="btn btn-outline-warning btn-sm m-2 templateToggleButtons">3</button>
       </div>
   </div>
 
@@ -1100,6 +1166,11 @@
 
           </div>
       </section>
+      <div id="templateToggle" class="templateToggleSegment mt-3 mb-0 w-100 d-flex justify-content-center">
+        <button id="toggleTemplate1" onclick="template_function()" class="btn btn-outline-warning btn-sm m-2 active templateToggleButtons">1</button>
+        <button id="toggleTemplate2" onclick="show_template2()" class="btn btn-outline-warning btn-sm m-2 templateToggleButtons">2</button>
+        <button id="toggleTemplate3" onclick="show_template3()" class="btn btn-outline-warning btn-sm m-2 templateToggleButtons">3</button>
+      </div>
   </div>
 
   <div id="template3" class="template3" style="display: none;">
@@ -1159,7 +1230,7 @@
 
               <section class="product-area mt-4">
                   <table class=" table table-hover table-bordered " id="table1">
-                      <thead>
+                      <thead style="background-color: #E4A11B;">
                           <tr>
                               <td style="text-align: center; font-weight:bold; color:black ">Items
                               </td>
@@ -1265,6 +1336,11 @@
                           </div>
                       </footer> -->
           </div>
+      </div>
+      <div id="templateToggle" class="templateToggleSegment mt-3 mb-0 w-100 d-flex justify-content-center">
+        <button id="toggleTemplate1" onclick="template_function()" class="btn btn-outline-warning btn-sm m-2 active templateToggleButtons">1</button>
+        <button id="toggleTemplate2" onclick="show_template2()" class="btn btn-outline-warning btn-sm m-2 templateToggleButtons">2</button>
+        <button id="toggleTemplate3" onclick="show_template3()" class="btn btn-outline-warning btn-sm m-2 templateToggleButtons">3</button>
       </div>
   </div>
 
@@ -1909,16 +1985,24 @@
               </tr>
             </thead>
             <tbody>
-              <!-- Loop through history entries -->
-              {% for entry in history %}
-              <tr>
-                <td>{{ forloop.counter }}</td> <!-- Incremental number -->
-                <td>{{ entry.date }}</td> <!-- Date of the history entry -->
-                <td>{{ entry.action }}</td> <!-- Action performed -->
-                <td>{{ entry.by.username }}</td> <!-- Username of the user who performed the action -->
-              </tr>
+              {% for entry in history_entries %}
+                  <tr>
+                      <td>{{ forloop.counter }}</td> <!-- Incremental number -->
+                      <td>{{ entry.modified_at }}</td> <!-- Date of the history entry -->
+                      <td>{% if entry.created_at == entry.modified_at %}Created{% else %}Modified{% endif %}</td>
+ <!-- Action performed -->
+ <td>
+  {% if entry.created_by %}
+      {{ entry.created_by.first_name }} {{ entry.created_by.last_name }}
+  {% elif entry.modified_by %}
+      {{ entry.modified_by.first_name }} {{ entry.modified_by.last_name }}
+  {% endif %}
+</td> <!-- Username of the user who performed the action -->
+ <!-- Username of the user who performed the action -->
+                  </tr>
               {% endfor %}
-            </tbody>
+          </tbody>
+          
           </table>
         </div>
       </div>

@@ -838,9 +838,9 @@ class RetainerInvoice(models.Model):
     is_draft=models.BooleanField(default=True)
     is_sent=models.BooleanField(default=False)
     balance=models.CharField(max_length=100,null=True,blank=True)
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='retainer_created', null=True, blank=True)
+    created_by = models.ForeignKey(LoginDetails, on_delete=models.SET_NULL, related_name='retainer_created', null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
-    modified_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='retainer_modified', null=True, blank=True)
+    modified_by = models.ForeignKey(LoginDetails, on_delete=models.SET_NULL, related_name='retainer_modified', null=True, blank=True)
     modified_at = models.DateTimeField(auto_now=True)
     def getNumFieldName(self):
         return 'retainer_invoice_number'

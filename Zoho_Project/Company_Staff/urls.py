@@ -373,6 +373,8 @@ urlpatterns = [
     path('Company/new_pymnt_trm',views.newPaymentTermAjax, name='newPaymentTermAjax'),
 
     path('retainer/<int:retainer_id>/history/', views.retainer_history, name='retainer_history'),
+    path('downloadRetainerInvoiceSampleImportFile/',views.downloadRetainerInvoiceSampleImportFile, name='downloadRetainerInvoiceSampleImportFile'),
+    path('importRetainerInvoiceFromExcel/',views.importRetainerInvoiceFromExcel, name='importRetainerInvoiceFromExcel'),
     re_path(r'^static/(?P<path>.*)$', serve,{'document_root': settings.STATIC_ROOT}),
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS)

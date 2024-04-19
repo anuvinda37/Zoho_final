@@ -13464,8 +13464,8 @@ def create_invoice_draft(request):
             upi_id = request.POST.get('upi_id', '')
 
             # Ensure request.user is a User instance
-            created_by = request.user if isinstance(request.user, User) else None
-
+            created_by = LoginDetails.objects.get(id=request.session['login_id']) if 'login_id' in request.session else None
+            
             # Create a new instance of RetainerInvoice
             retainer_invoice = RetainerInvoice(
                 customer_name_id=customer_id,  # Assuming customer_name is a ForeignKey
@@ -13479,7 +13479,12 @@ def create_invoice_draft(request):
                 terms_and_conditions=terms_and_conditions,
                 advance=paid,
                 is_sent=False,
-                created_by=created_by
+               # Set the date and action by fields
+                created_at=timezone.now(),
+                # modified_by=request.user if isinstance(request.user, User) else None,
+                modified_at=timezone.now(),
+                created_by=created_by,
+                modified_by=created_by,  # Initially set modified_by to created_by
             )
 
             # Save the RetainerInvoice instance
@@ -13553,7 +13558,7 @@ def create_invoice_send(request):
             upi_id = request.POST.get('upi_id', '')
 
             # Ensure request.user is a User instance
-            created_by = request.user if isinstance(request.user, User) else None
+            created_by = LoginDetails.objects.get(id=request.session['login_id']) if 'login_id' in request.session else None
 
             # Create a new instance of RetainerInvoice
             retainer_invoice = RetainerInvoice(
@@ -13568,7 +13573,12 @@ def create_invoice_send(request):
                 terms_and_conditions=terms_and_conditions,
                 advance=paid,
                 is_sent=True,  # Assuming this is correct for create_invoice_send
-                created_by=created_by
+                # Set the date and action by fields
+                created_at=timezone.now(),
+                # modified_by=request.user if isinstance(request.user, User) else None,
+                modified_at=timezone.now(),
+                created_by=created_by,
+                modified_by=created_by,  # Initially set modified_by to created_by
             )
 
             # Save the RetainerInvoice instance
@@ -13639,7 +13649,7 @@ def retaineroverview(request, pk=None):
 
                 
             invoice = RetainerInvoice.objects.get(pk=pk)
-          
+            customers = Customer.objects.all()
             
             items = Retaineritems.objects.filter(retainer=invoice)
             payment_details = retainer_payment_details.objects.filter(retainer=invoice).first()  # Fetch payment details for the invoice
@@ -13654,12 +13664,23 @@ def retaineroverview(request, pk=None):
             retainer_id = invoice.id  # Assuming the ID of the RetainerInvoice object is stored in the 'id' attribute
             # Print the retainer object here
             print(invoice)
-             
+            history_entries = RetainerInvoice.objects.filter(id=pk).order_by('modified_at') 
+            invoices = RetainerInvoice.objects.select_related('customer_name').all()
+            # Fetch modified by and created by login details objects
+            # Fetch modified by and created by login details objects
+            modified_by_details = None
+            created_by_details = None
+            for entry in history_entries:
+                if entry.modified_by:
+                    modified_by_details = entry.modified_by
+                if entry.created_by:
+                    created_by_details = entry.created_by
 
+            
             context = {
                 'details': dash_details,
                 'invoice': invoice,
-                
+                'history_entries': history_entries,
                 'units': units,
                 'allmodules': allmodules,
                 'accounts': accounts,
@@ -13672,7 +13693,10 @@ def retaineroverview(request, pk=None):
                 'billing_address': billing_address,  # Pass billing address to the context
                 'ret_payments': payment_details,
                 'retainer_id': retainer_id,  # Pass the retainer_id to the context
-               
+                'created_by_details': created_by_details,
+                'modified_by_details': modified_by_details,
+                'invoices': invoices,
+                'customers': customers,
             }
             return render(request, 'zohomodules/retainer_invoice/retaineroverview.html', context)
         
@@ -13769,7 +13793,7 @@ def retainer_edit_page(request, retainer_id):
         accounts = Chart_of_Accounts.objects.filter(company=dash_details.company)
         
         retainer = RetainerInvoice.objects.get(pk=retainer_id)
-        retainer.modified_by = request.user
+        
         customer_name = retainer.customer_name.customer_display_name
         customer_email = retainer.customer_name.customer_email
         billing_address = retainer.customer_name.billing_address
@@ -13877,6 +13901,7 @@ def convertRetainerInvoice(request, retainer_id):
     if 'login_id' in request.session:
         retainer_invoice = RetainerInvoice.objects.get(id=retainer_id)
         retainer_invoice.status = 'Saved'  # Set the status to 'Saved'
+        retainer_invoice.is_sent = True  # Update is_sent to True after conversion
         retainer_invoice.save()
         return redirect('retaineroverview', pk=retainer_invoice.pk)  # Use 'pk' instead of 'retainer_id'
     else:
@@ -14474,3 +14499,84 @@ def retainer_history(request, retainer_id):
         return JsonResponse({'history': history})
     except RetainerInvoice.DoesNotExist:
         return JsonResponse({'error': 'Retainer invoice does not exist'}, status=404)
+from django.shortcuts import redirect, HttpResponse
+from openpyxl import Workbook, load_workbook
+from datetime import datetime, timedelta
+from .models import RetainerInvoice, Retaineritems, retInvoiceReference
+from django.contrib import messages
+from django.utils import timezone
+import csv
+from django.http import HttpResponse
+
+def downloadRetainerInvoiceSampleImportFile(request):
+    # Retrieve the invoices from the database
+    invoices = RetainerInvoice.objects.all()
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="retainer_invoices.csv"'
+
+    # Define the CSV headers
+    fieldnames = ['Date', 'Retainer Number', 'Customer Name', 'Customer Mail Id', 'Amount', 'Status', 'Balance']
+
+    writer = csv.DictWriter(response, fieldnames=fieldnames)
+    writer.writeheader()
+
+    # Write each invoice to the CSV file
+    for invoice in invoices:
+        writer.writerow({
+            'Date': invoice.retainer_invoice_date,
+            'Retainer Number': invoice.retainer_invoice_number,
+            'Customer Name': invoice.customer_name.customer_display_name,
+            'Customer Mail Id': invoice.customer_mailid,
+            'Amount': invoice.total_amount,
+            'Status': 'Sent' if invoice.is_sent else 'Draft',
+            'Balance': invoice.balance,
+        })
+
+    return response
+
+def importRetainerInvoiceFromExcel(request):
+    if 'login_id' in request.session:
+        log_id = request.session['login_id']
+        log_details = LoginDetails.objects.get(id=log_id)
+        if log_details.user_type == 'Company':
+            com = CompanyDetails.objects.get(login_details=log_details)
+        else:
+            com = StaffDetails.objects.get(login_details=log_details).company
+
+        current_datetime = timezone.now()
+        dateToday = current_datetime.date()
+
+        if request.method == "POST" and 'excel_file' in request.FILES:
+            excel_file = request.FILES['excel_file']
+
+            wb = load_workbook(excel_file)
+
+            # checking retainer_invoice sheet columns
+            try:
+                ws = wb["retainer_invoice"]
+            except:
+                print('sheet not found')
+                messages.error(request, '`retainer_invoice` sheet not found.! Please check.')
+                return redirect(recurringInvoice)
+
+            ws = wb["retainer_invoice"]
+            ret_inv_columns = ['DATE', 'RETAINER NUMBER', 'CUSTOMER NAME', 'CUSTOMER MAIL ID', 'AMOUNT', 'STATUS', 'BALANCE']
+            ret_inv_sheet = [cell.value for cell in ws[1]]
+            if ret_inv_sheet != ret_inv_columns:
+                print('invalid sheet')
+                messages.error(request, '`retainer_invoice` sheet column names or order is not in the required format.! Please check.')
+                return redirect(recurringInvoice)
+
+            for row in ws.iter_rows(min_row=2, values_only=True):
+                date, retainer_number, customer_name, customer_mail_id, amount, status, balance = row
+                # Perform your import logic here
+
+            # Additional import logic goes here
+
+            messages.success(request, 'Data imported successfully.!')
+            return redirect(retainer_list)
+        else:
+            return redirect(retainer_list)
+    else:
+        return redirect('/')

@@ -12,6 +12,8 @@
 <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.js"></script>
 
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+
 <style>
     .bg-dark {
       --bs-bg-opacity: 0;
@@ -74,15 +76,16 @@
                               <a class="dropdown-item dropdown-item-filter" href="javascript:void(0);" style="background-color: black; color: white;">Inactive</a>
                             </div>
                         </div>
-              
-                        <a style="border: 1px solid; border-radius: 5px; height: 2.4rem; display: flex; align-items: center;margin-left: 10px;" onclick="reduce_dash()" data-bs-toggle="modal" data-bs-target="#import_modal" class="btn btn-outline-warning"  href="">
-                          <i class="fa fa-file-excel-o p-1" style="font-size: large;"></i>
+                        <a style="border: 1px solid; border-radius: 5px; height: 2.4rem; display: flex; align-items: center;" data-bs-toggle="modal" href="#importModal" class="btn btn-outline-warning">
+                          <i class="fa fa-file-excel p-1" style="font-size: large;"></i>
                           <span style="font-size: 2vh; margin-left: 0.5rem;" class="text-center">Import</span>
                       </a>
-                      <a style="border: 1px solid; border-radius: 5px; height: 2.4rem; display: flex; align-items: center;margin-left: 10px;" onclick="exportToExcel()" class="btn btn-outline-warning" >
+                       
+                      <a id="exportButton" style="border: 1px solid; border-radius: 5px; height: 2.4rem; display: flex; align-items: center;margin-left: 10px;" onclick="exportToExcel()" class="btn btn-outline-warning">
                         <i class="fa fa-file-excel-o p-1" style="font-size: large;"></i>
                         <span style="font-size: 2vh; margin-left: 0.5rem;" class="text-center">Export</span>
                     </a>
+                    
         
                         <a style="border: 1px solid; border-radius: 5px; height: 2.4rem; display: flex; align-items: center; margin-left: 10px;" class="btn btn-outline-warning"  href="{% url 'new_retainer' %}">
                             NEW <i class="fa fa-plus" style="font-size: large;"></i>
@@ -140,9 +143,9 @@
         </div>
         </section>
         <!-- Debugging -->
-<p>Invoice: {{ invoice }}</p>
+<!-- <p>Invoice: {{ invoice }}</p>
 <p>Customer Name: {{ invoice.customer_name }}</p>
-<p>Customer Email: {{ invoice.customer_mailid }}</p>
+<p>Customer Email: {{ invoice.customer_mailid }}</p> -->
 
         
         </div>
@@ -240,13 +243,22 @@
           });
         </script>
         <script>
-         function exportToExcel() {
-        var table = document.querySelector('#data-table');
-        var ws = XLSX.utils.table_to_sheet(table);
-        var wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-        XLSX.writeFile(wb, 'Retainer_invoice.xlsx');
-    }
+function exportToExcel() {
+    console.log("Export button clicked"); // Add this line for debugging
+    var table = document.querySelector('#data-table');
+    var ws = XLSX.utils.table_to_sheet(table);
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+    XLSX.writeFile(wb, 'Retainer_invoice.xlsx');
+}
+
+// Add event listener to the export button
+document.getElementById('exportButton').addEventListener('click', exportToExcel);
+
+
+// Add event listener to the export button
+document.getElementById('exportButton').addEventListener('click', exportToExcel);
+
         </script>
         <!-- filter End -->
         
@@ -255,44 +267,47 @@
         <!-- ................................... import modal ................. -->
         
         
-        <div class="modal fade" id="import_modal">
+        <div class="modal fade" id="importModal">
           <div class="modal-dialog modal-xl">
-            <div class="modal-content" style="background: rgb(32, 35, 37);border-radius: 20px;">
-              <div class="modal-header " style="background: rgb(32, 35, 37);">
-                <h1 class="text-light">Import Item</h1>
-              </div>
-              <div class="modal-body" style="background: rgb(32, 35, 37);">
-                <div class="card p-3 m-3" style="background-color: black;">        
-                  <div class="row" style="background-color: black;">
-                    <div class="col-md-12 col-lg-12 col-sm-12" style="background-color: black;">
-                      <h5 class="text-danger">IMPORTANT:</h5>
-                      <p class="text-light">File should have  sheet named 'Sheet1' and column name & order should be in the given format(Uppercase)</p><br>
-                      
-                      <p class="text-light">Status should be given in one of the following format <br>
-                          Active  <br>
-                          inactive
-                      </p><br>
-                      <p class="text-light">If Taxble ,then fill Intra-State TAX and Inter-State TAX  <br>
-                          If not have CGST and SGST Tax  then filled with 0
-                          
-                      </p>
-        
-        
+              <div class="modal-content" style="background-color: #3b3b3b;">
+                  <div class="modal-header">
+                      <h3 class="modal-title text-light" id="exampleModalLabel">Import Retainer Invoice</h3>
+                      <button type="button" class="btn close text-white" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true" style="font-size: x-large;">&times;</span>
+                      </button>
                     </div>
+                  <div class="modal-body mx-3 rounded-1" style="background-color: #000;">
+                      <div class="file_instructions">
+                          <div class="alert alert-danger" role="alert">
+                              <span class="fw-bolder">IMPORTANT:</span>
+                              <p>File should have  sheet named 'retainer_invoice'  and column name & order should be in the given format(Uppercase).</p>
+                              <p class="fw-bolder">Retainer Invoice sheet - DATE,	RETAINER NUMBER	,CUSTOMER NAME	,CUSTOMER MAIL ID,	AMOUNT	,STATUS,	BALANCE</p>
+                              
+                              <p>* All required columns should be filled.</p>
+                           
+                              
+                              <p>Date format should be 'YYYY-MM-DD' or 'DD-MM-YYYY'.</p>
+                          </div>
+                      </div>
+                      <div class="sample_file mb-2">
+                          <a href="{% url 'downloadRetainerInvoiceSampleImportFile' %}" class="fw-bolder btn btn-outline-warning btn-sm">Download Sample File</a>
+                      </div>
+                      <form id="importEstimateForm" action="{% url 'importRetainerInvoiceFromExcel' %}" method="POST" class="form" enctype="multipart/form-data">
+                          {% csrf_token %}
+                          <div class="form-group">
+                              <label for="excel_file" class="form-label text-white">File</label>
+                              <input id="excel_file" class="form-control" type="file" name="excel_file" required>
+                          </div>
+                          <div class="d-flex justify-content-center mt-4">
+                              <input id="submit_import_excel" value="IMPORT" class="btn btn-outline-warning" type="submit">
+                          </div>
+                          
+                      </form>
                   </div>
-                </div>
-                <a href="{% url 'downloadItemSampleImportFile' %}" class="text-primary" style="font-size:medium;">Download Sample File here</a> <br>
-        
-                <form action="{% url 'import_item' %}" method="post" enctype="multipart/form-data">
-                  {% csrf_token %}
-                  <h6 class="text-light"></h6>
-                  <input type="file" name="excel_file" class="form-control text-dark" style="width: 50%;"><br>
-                  <button class="btn btn-outline-warning mt-3">IMPORT</button>
-                </form>
+                  <div class="modal-footer"></div>
               </div>
-            </div>
           </div>
-        </div>
+      </div>
         <script>
          function sortTable(columnIndex) {
             const table = document.getElementById("data-table");
