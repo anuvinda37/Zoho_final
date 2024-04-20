@@ -13489,6 +13489,20 @@ def create_invoice_draft(request):
 
             # Save the RetainerInvoice instance
             retainer_invoice.save()
+            # Update the retInvoiceReference model
+            last_reference = retInvoiceReference.objects.filter(company=dash_details).aggregate(Max('reference'))
+            if last_reference['reference__max'] is None:
+                reference = 1
+            else:
+                reference = last_reference['reference__max'] + 1
+
+            ret_reference = retInvoiceReference(
+                reference=reference,
+                user=request.user if isinstance(request.user, User) else None,
+                company=dash_details,
+                logindetails=log_details
+            )
+            ret_reference.save()
 
             # Optionally, create and save a RetainerPaymentDetails instance
             if pay_method:
@@ -13518,9 +13532,11 @@ def create_invoice_draft(request):
                     quantity=qty[i],
                     rate=rate[i]
                 )
-
+            # Pass the latest reference value to the template
+            latest_reference = retInvoiceReference.objects.filter(company=dash_details).latest('reference')
+            reford = str(latest_reference.reference).zfill(2)  # Zero-pad the reference value
             # Redirect to retainer_list.html after saving
-            return redirect('retainer_list')
+            return redirect('retainer_list',{'reford': reford})
 
         else:
             return HttpResponse("Invalid request")
@@ -13583,7 +13599,20 @@ def create_invoice_send(request):
 
             # Save the RetainerInvoice instance
             retainer_invoice.save()
+            # Update the retInvoiceReference model
+            last_reference = retInvoiceReference.objects.filter(company=dash_details).aggregate(Max('reference'))
+            if last_reference['reference__max'] is None:
+                reference = 1
+            else:
+                reference = last_reference['reference__max'] + 1
 
+            ret_reference = retInvoiceReference(
+                reference=reference,
+                user=request.user if isinstance(request.user, User) else None,
+                company=dash_details,
+                logindetails=log_details
+            )
+            ret_reference.save()
             # Optionally, create and save a RetainerPaymentDetails instance
             if pay_method:
                 ret_payment = retainer_payment_details(
@@ -13612,9 +13641,11 @@ def create_invoice_send(request):
                     quantity=qty[i],
                     rate=rate[i]
                 )
-
+                        # Pass the latest reference value to the template
+            latest_reference = retInvoiceReference.objects.filter(company=dash_details).latest('reference')
+            reford = str(latest_reference.reference).zfill(2)  # Zero-pad the reference value
             # Redirect to retainer_list.html after saving
-            return redirect('retainer_list')
+            return redirect('retainer_list',{'reford': reford})
 
         else:
             return HttpResponse("Invalid request")

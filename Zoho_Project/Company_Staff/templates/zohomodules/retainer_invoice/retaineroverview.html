@@ -26,7 +26,10 @@
 
                                                 
                                                 <style>
-                                                  
+                                                   .divider{
+          margin: 1rem 0;
+          border-bottom: 3px dotted black;
+      }
 
                                                   .logo img {
         max-height: 100px;
@@ -406,15 +409,15 @@
              <!-- Table 2: Billable Projects -->
              <table class="table  text-white" id="table2">
                <tbody>
-                 
-                   <tr class="clickable" id="{{i.id}}">
+                {% for invoice in invoices %}
+                   <tr class="clickable" id="{{invoice.id}}">
                      <td class="justify-content-between align-items-center ">
                        <!-- <b ><a class="text-white"  href="">{{i.item_name}} </a></b>
                        <br>
                        <a class="text-white"  href="">{{i.hsn_code}}</a><br> -->
                        <label class="text-left d-block"><a class="text-white"  href="">{{invoice.retainer_invoice_number}} </a></label>
                        <br>
-                       <label class="text-left d-block"><a class="text-white"  href="">{{ customer_name }}</a></label>
+                       <label class="text-left d-block"><a class="text-white"  href="">{{ invoice.customer_name.customer_display_name }}</a></label>
                   
                      </td>
                      
@@ -428,7 +431,7 @@
                 <label class="text-end d-block text-white">₹{{ invoice.total_amount }}</label>
                      </td>
                    </tr></a>
-                 
+                   {% endfor %}
                </tbody>
              </table>
              
@@ -1345,7 +1348,7 @@
   </div>
 
   <fieldset2 id="est_slip" style="display: none;">
-      <div style="background-color: rgb(255, 221, 176);" class="mx-2 my-4">
+      <div style="background-color: rgb(0, 0, 0);" class="mx-2 my-4">
 
           <div class="my-5 slip-page" style="width: 700px;">
               <div class="row" style="margin-top: 20%; " id="printslip">
@@ -1356,7 +1359,7 @@
                               <div class="text-center" style="font-size: 3vh; color: black;">
                                   <b> {{ details.company.company_name }} </b>
                               </div>
-                              <span style="font-size: x-small; color: black;">{{ details.company.address }}
+                              <span style="font-size:medium; color: black;">{{ details.company.address }}
                                   <br>
                                   {{ details.company.city }},
                                   {{ details.company.state }}
@@ -1364,6 +1367,7 @@
                                   {{ details.company.contact }} <br> {{ details.login_details.email }}
                               </span>
                           </div>
+                          <div class="divider"></div>
                           <div class="ml-4 mt-2" style="color: black;">
                               <div class="row">
                                   <div class="col-md-6 text-left">Retainer Invoice No:</div>
@@ -1382,6 +1386,7 @@
                                   </div>
                               </div>
                           </div>
+                          <div class="divider"></div>
                           <div><br>
                               <div class="equal-length-container"
                                   style="color: black; font-weight: bold;">
@@ -1481,8 +1486,7 @@
                           {% else %}
                           <div><br>
 
-                              <hr class="ml-2 mr-2"
-                                  style="color: black; border-bottom: 1px solid black; ">
+                            <div class="divider"></div>
                           </div>
 
                           <div class="mb-2">
