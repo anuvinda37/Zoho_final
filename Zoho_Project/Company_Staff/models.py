@@ -882,11 +882,6 @@ class RetainerInvoiceComment(models.Model):
 
     def __str__(self):
         return f"Comment by {self.company} on Retainer Invoice #{self.retainer_invoice.id}"
-class retInvoiceReference(models.Model):
-    reference = models.BigIntegerField()
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
-    company = models.ForeignKey(CompanyDetails, on_delete=models.CASCADE, null=True, blank=True)
-    logindetails = models.ForeignKey(LoginDetails, on_delete=models.CASCADE, null=True, blank=True)
 
 
 

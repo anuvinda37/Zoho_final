@@ -13102,28 +13102,32 @@ from django.http import JsonResponse
 from datetime import date
 from .models import Items, CompanyDetails, StaffDetails, RetainerInvoice, retInvoiceReference, Banking, LoginDetails, Unit, Chart_of_Accounts, Customer, ZohoModules
 
+from django.db.models import Max
+
 def new_retainer(request):
     if 'login_id' in request.session:
         login_id = request.session['login_id']
         if 'login_id' not in request.session:
             return redirect('/')
         log_details = LoginDetails.objects.get(id=login_id)
-        # Add print statements or logging here
-        print(request.POST)  # Check if form data is being received
-        print(request.method)  # Check the HTTP method (GET or POST)
+        
         if log_details.user_type == 'Staff':
             staff_id = request.session['login_id']
             try:
                 staff = StaffDetails.objects.get(login_details=log_details)
                 company = staff.company
-                dash_details = staff  # Assign staff details to dash_details
+                dash_details = staff
+                customers = Customer.objects.filter(company=company)
+                last_record = RetainerInvoice.objects.filter(user=request.user.id).order_by('-id').first()  # Use .first() to get a single instance
             except StaffDetails.DoesNotExist:
                 return redirect('/')
         elif log_details.user_type == 'Company':
             company_id = request.session['login_id']
             try:
                 company = CompanyDetails.objects.get(login_details=log_details)
-                dash_details = company  # Assign company details to dash_details
+                dash_details = company
+                customers = Customer.objects.filter(company=company)
+                last_record = RetainerInvoice.objects.filter(company=dash_details).order_by('-id').first()  # Use .first() to get a single instance
             except CompanyDetails.DoesNotExist:
                 return redirect('/')
         else:
@@ -13133,47 +13137,37 @@ def new_retainer(request):
         allmodules = ZohoModules.objects.get(company=company, status='New')
         units = Unit.objects.filter(company=company)
         accounts = Chart_of_Accounts.objects.filter(company=company)
-        customers = Customer.objects.all()
-        last_record = RetainerInvoice.objects.filter(logindetails=log_details).last()
-
-        next_ret_number = ''  # Initialize next_ret_number with a default value
-        lastSalesNo = ''
-        if last_record == None:
-            reference = '01'
-            remaining_characters = ''
-        else:
-            lastSalesNo = last_record.retainer_invoice_number
-            last_two_numbers = int(lastSalesNo[-2:])+1
-            for i in range(len(lastSalesNo)-1,-1,-1):
-                if not lastSalesNo[i].isdigit():
-                    last_digit_index=i+1
-                    break
-            prefix=lastSalesNo[:last_digit_index]
-            number=int(lastSalesNo[last_digit_index:])
-            number+=1
-            enumber=str(number).zfill(3)
-            next_ret_number=f"{prefix}{enumber}"
-            last_two_numbers = int(lastSalesNo[-2:])+1
-            remaining_characters = lastSalesNo[:-2]  
-            if remaining_characters == '':
-                if last_two_numbers < 10:
-                    reference = '0'+str(last_two_numbers)
-                else:
-                    reference = str(last_two_numbers)
-            else:
-                if last_two_numbers < 10:
-                    reference = remaining_characters+'0'+str(last_two_numbers)
-                else:
-                    reference = remaining_characters+str(last_two_numbers)
         
-        last_reference = retInvoiceReference.objects.filter(logindetails=request.user.id).last()
-        if last_reference == None:
+        
+        # Get the last recorded RetainerInvoice based on logindetails
+        # last_record = RetainerInvoice.objects.filter(logindetails=log_details).order_by('-id').first()
+        print("last record:",last_record)
+        # Initialize next retainer invoice number
+        next_ret_number = ''
+        
+        # Check if there's an existing last record
+        if last_record:
+            # Extract the last retainer invoice number
+            last_ret_number = last_record.retainer_invoice_number
+            # Extract prefix and number from the last retainer invoice number
+            prefix = ''
+            number = last_ret_number
+            if last_ret_number[:2].isalpha():
+                prefix = last_ret_number[:2]
+                number = last_ret_number[2:]
+            # Increment the number for the next retainer invoice
+            number = str(int(number) + 1).zfill(len(number))
+            # Combine prefix and number for the next retainer invoice number
+            next_ret_number = f"{prefix}{number}"
+        
+        # Get the last reference from retInvoiceReference
+        last_reference = retInvoiceReference.objects.filter(company=company).last()
+        if last_reference is None:
             reford = '01'
         else:
-            if last_reference.reference+1 < 10:
-                reford = '0'+ str(last_reference.reference+1)
-            else:
-                reford = str(last_reference.reference+1)
+            # Increment the reference number for the next RetainerInvoice
+            next_reference = last_reference.reference + 1
+            reford = f"{next_reference:02}"
         
         banks = Banking.objects.filter(company=company).values_list('bnk_name', flat=True)
 
@@ -13184,8 +13178,6 @@ def new_retainer(request):
             'accounts': accounts,
             'customer1': customers,
             'reford': reford,
-            'reference': reference,
-            'remaining_characters': remaining_characters,
             'next_ret_number': next_ret_number,
             'item': item,
             'banks': banks,
@@ -13193,6 +13185,10 @@ def new_retainer(request):
         return render(request, 'zohomodules/retainer_invoice/new_retainer.html', context)
     else:
         return redirect('/')
+
+
+
+
 
 
 # def new_retainer(request):                                                              
@@ -13464,8 +13460,8 @@ def create_invoice_draft(request):
             upi_id = request.POST.get('upi_id', '')
 
             # Ensure request.user is a User instance
-            created_by = LoginDetails.objects.get(id=request.session['login_id']) if 'login_id' in request.session else None
-            
+            created_by = LoginDetails.objects.get(id=log_id)  # No need to check if it's in session since it's checked above
+
             # Create a new instance of RetainerInvoice
             retainer_invoice = RetainerInvoice(
                 customer_name_id=customer_id,  # Assuming customer_name is a ForeignKey
@@ -13478,79 +13474,82 @@ def create_invoice_draft(request):
                 customer_notes=customer_notes,
                 terms_and_conditions=terms_and_conditions,
                 advance=paid,
-                is_sent=False,
-               # Set the date and action by fields
+                is_sent=False,  # Assuming this is correct for create_invoice_draft
+                # Set the date and action by fields
                 created_at=timezone.now(),
-                # modified_by=request.user if isinstance(request.user, User) else None,
-                modified_at=timezone.now(),
+                modified_at=timezone.now(),  # Assuming modified_at is set to current time when created
                 created_by=created_by,
                 modified_by=created_by,  # Initially set modified_by to created_by
             )
 
-            # Save the RetainerInvoice instance
-            retainer_invoice.save()
-            # Update the retInvoiceReference model
-            last_reference = retInvoiceReference.objects.filter(company=dash_details).aggregate(Max('reference'))
-            if last_reference['reference__max'] is None:
-                reference = 1
-            else:
-                reference = last_reference['reference__max'] + 1
+            # Use transaction.atomic() to ensure atomicity of the operations
+            with transaction.atomic():
+                # Save the RetainerInvoice instance
+                retainer_invoice.save()
 
-            ret_reference = retInvoiceReference(
-                reference=reference,
-                user=request.user if isinstance(request.user, User) else None,
-                company=dash_details,
-                logindetails=log_details
-            )
-            ret_reference.save()
-
-            # Optionally, create and save a RetainerPaymentDetails instance
-            if pay_method:
-                ret_payment = retainer_payment_details(
-                    retainer=retainer_invoice,
-                    payment_opt=pay_method,
-                    acc_no=acc_no,
-                    cheque_no=cheque_no,
-                    upi_id=upi_id
+                # Increment and save the reference number for retInvoiceReference
+                last_reference = retInvoiceReference.objects.filter(company=dash_details).last()
+                if last_reference is None:
+                    next_reference = 1
+                else:
+                    next_reference = last_reference.reference + 1
+                
+                retInvoiceReference.objects.create(
+                    reference=next_reference,
+                    user=None,  # Update this if needed
+                    company=dash_details,
+                    logindetails=log_details  # Update this if needed
                 )
-                ret_payment.save()
 
-            # Save Retaineritems instances for each item received in the POST request
-            description = request.POST.getlist('description[]')
-            amount = request.POST.getlist('amount[]')
-            item_ids = request.POST.getlist('item[]')
-            qty = request.POST.getlist('quantity[]')
-            rate = request.POST.getlist('rate[]')
+                # Optionally, create and save a RetainerPaymentDetails instance
+                if pay_method:
+                    ret_payment = retainer_payment_details(
+                        retainer=retainer_invoice,
+                        payment_opt=pay_method,
+                        acc_no=acc_no,
+                        cheque_no=cheque_no,
+                        upi_id=upi_id
+                    )
+                    ret_payment.save()
 
-            for i in range(len(description)):
-                item = Items.objects.get(id=item_ids[i])
-                Retaineritems.objects.create(
-                    retainer=retainer_invoice,
-                    description=description[i],
-                    amount=amount[i],
-                    itemname=item.item_name,  # Assign the item name properly
-                    quantity=qty[i],
-                    rate=rate[i]
-                )
-            # Pass the latest reference value to the template
-            latest_reference = retInvoiceReference.objects.filter(company=dash_details).latest('reference')
-            reford = str(latest_reference.reference).zfill(2)  # Zero-pad the reference value
+                # Save Retaineritems instances for each item received in the POST request
+                description = request.POST.getlist('description[]')
+                amount = request.POST.getlist('amount[]')
+                item_ids = request.POST.getlist('item[]')
+                qty = request.POST.getlist('quantity[]')
+                rate = request.POST.getlist('rate[]')
+
+                for i in range(len(description)):
+                    item = Items.objects.get(id=item_ids[i])
+                    Retaineritems.objects.create(
+                        retainer=retainer_invoice,
+                        description=description[i],
+                        amount=amount[i],
+                        itemname=item.item_name,  # Assign the item name properly
+                        quantity=qty[i],
+                        rate=rate[i]
+                    )
+
             # Redirect to retainer_list.html after saving
-            return redirect('retainer_list',{'reford': reford})
+            return redirect('retainer_list')
 
         else:
             return HttpResponse("Invalid request")
+    else:
+        return redirect('/')
+
+
+from django.db import transaction  # Import transaction to ensure atomicity
 
 def create_invoice_send(request):
     if 'login_id' in request.session:
-        if request.session.has_key('login_id'):
-            log_id = request.session['login_id']
-        else:
+        log_id = request.session.get('login_id')
+        if not log_id:
             return redirect('/')
         
         log_details= LoginDetails.objects.get(id=log_id)
         
-        if log_details.user_type=='Staff':
+        if log_details.user_type == 'Staff':
             staff_details=StaffDetails.objects.get(login_details=log_details)
             dash_details = CompanyDetails.objects.get(id=staff_details.company.id)
         else:    
@@ -13574,7 +13573,7 @@ def create_invoice_send(request):
             upi_id = request.POST.get('upi_id', '')
 
             # Ensure request.user is a User instance
-            created_by = LoginDetails.objects.get(id=request.session['login_id']) if 'login_id' in request.session else None
+            created_by = LoginDetails.objects.get(id=log_id)  # No need to check if it's in session since it's checked above
 
             # Create a new instance of RetainerInvoice
             retainer_invoice = RetainerInvoice(
@@ -13591,64 +13590,67 @@ def create_invoice_send(request):
                 is_sent=True,  # Assuming this is correct for create_invoice_send
                 # Set the date and action by fields
                 created_at=timezone.now(),
-                # modified_by=request.user if isinstance(request.user, User) else None,
-                modified_at=timezone.now(),
+                modified_at=timezone.now(),  # Assuming modified_at is set to current time when created
                 created_by=created_by,
                 modified_by=created_by,  # Initially set modified_by to created_by
             )
 
-            # Save the RetainerInvoice instance
-            retainer_invoice.save()
-            # Update the retInvoiceReference model
-            last_reference = retInvoiceReference.objects.filter(company=dash_details).aggregate(Max('reference'))
-            if last_reference['reference__max'] is None:
-                reference = 1
-            else:
-                reference = last_reference['reference__max'] + 1
+            # Use transaction.atomic() to ensure atomicity of the operations
+            with transaction.atomic():
+                # Save the RetainerInvoice instance
+                retainer_invoice.save()
 
-            ret_reference = retInvoiceReference(
-                reference=reference,
-                user=request.user if isinstance(request.user, User) else None,
-                company=dash_details,
-                logindetails=log_details
-            )
-            ret_reference.save()
-            # Optionally, create and save a RetainerPaymentDetails instance
-            if pay_method:
-                ret_payment = retainer_payment_details(
-                    retainer=retainer_invoice,
-                    payment_opt=pay_method,
-                    acc_no=acc_no,
-                    cheque_no=cheque_no,
-                    upi_id=upi_id
+                # Increment and save the reference number for retInvoiceReference
+                last_reference = retInvoiceReference.objects.filter(company=dash_details).last()
+                if last_reference is None:
+                    next_reference = 1
+                else:
+                    next_reference = last_reference.reference + 1
+                
+                retInvoiceReference.objects.create(
+                    reference=next_reference,
+                    user=None,  # Update this if needed
+                    company=dash_details,
+                    logindetails=log_details  # Update this if needed
                 )
-                ret_payment.save()
 
-            # Save Retaineritems instances for each item received in the POST request
-            description = request.POST.getlist('description[]')
-            amount = request.POST.getlist('amount[]')
-            item_ids = request.POST.getlist('item[]')
-            qty = request.POST.getlist('quantity[]')
-            rate = request.POST.getlist('rate[]')
+                # Optionally, create and save a RetainerPaymentDetails instance
+                if pay_method:
+                    ret_payment = retainer_payment_details(
+                        retainer=retainer_invoice,
+                        payment_opt=pay_method,
+                        acc_no=acc_no,
+                        cheque_no=cheque_no,
+                        upi_id=upi_id
+                    )
+                    ret_payment.save()
 
-            for i in range(len(description)):
-                item = Items.objects.get(id=item_ids[i])
-                Retaineritems.objects.create(
-                    retainer=retainer_invoice,
-                    description=description[i],
-                    amount=amount[i],
-                    itemname=item.item_name,  # Assign the item name properly
-                    quantity=qty[i],
-                    rate=rate[i]
-                )
-                        # Pass the latest reference value to the template
-            latest_reference = retInvoiceReference.objects.filter(company=dash_details).latest('reference')
-            reford = str(latest_reference.reference).zfill(2)  # Zero-pad the reference value
+                # Save Retaineritems instances for each item received in the POST request
+                description = request.POST.getlist('description[]')
+                amount = request.POST.getlist('amount[]')
+                item_ids = request.POST.getlist('item[]')
+                qty = request.POST.getlist('quantity[]')
+                rate = request.POST.getlist('rate[]')
+
+                for i in range(len(description)):
+                    item = Items.objects.get(id=item_ids[i])
+                    Retaineritems.objects.create(
+                        retainer=retainer_invoice,
+                        description=description[i],
+                        amount=amount[i],
+                        itemname=item.item_name,  # Assign the item name properly
+                        quantity=qty[i],
+                        rate=rate[i]
+                    )
+
             # Redirect to retainer_list.html after saving
-            return redirect('retainer_list',{'reford': reford})
+            return redirect('retainer_list')
 
         else:
             return HttpResponse("Invalid request")
+    else:
+        return redirect('/')
+
 
 from django.contrib.auth.models import User
 from django.shortcuts import render
@@ -13680,7 +13682,7 @@ def retaineroverview(request, pk=None):
 
                 
             invoice = RetainerInvoice.objects.get(pk=pk)
-            customers = Customer.objects.all()
+            
             
             items = Retaineritems.objects.filter(retainer=invoice)
             payment_details = retainer_payment_details.objects.filter(retainer=invoice).first()  # Fetch payment details for the invoice
@@ -13727,7 +13729,6 @@ def retaineroverview(request, pk=None):
                 'created_by_details': created_by_details,
                 'modified_by_details': modified_by_details,
                 'invoices': invoices,
-                'customers': customers,
             }
             return render(request, 'zohomodules/retainer_invoice/retaineroverview.html', context)
         
@@ -13842,6 +13843,7 @@ def retainer_edit_page(request, retainer_id):
         payment_methods = ['cash', 'cheque', 'upi']
         banks = Banking.objects.filter(company=dash_details.company).values_list('bnk_name', flat=True)
         payment_details = retainer_payment_details.objects.filter(retainer=retainer).first()
+        customers = Customer.objects.all()
         
         if request.method == 'POST':
             customer_name = request.POST.get('customer_name')
@@ -13882,6 +13884,7 @@ def retainer_edit_page(request, retainer_id):
                 'customer_notes': customer_notes,
                 'terms_conditions': terms_conditions,
                 'balance': balance,
+                'customer1': customers,  # Pass the customers queryset to the template context
             }
           
             return render(request, 'zohomodules/retainer_invoice/retainer_invoice_edit.html', context)

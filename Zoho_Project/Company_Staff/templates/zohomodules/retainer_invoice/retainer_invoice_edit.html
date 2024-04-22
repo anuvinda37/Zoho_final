@@ -240,9 +240,12 @@ li{
                             <label class="">Customer Name *</label>
                           </div>
                           <div class="col-md-6 d-flex">
-                            <input type="text" class="form-control" id="customer_name" name="customer_name"
-           value="{{ customer_name }}" required >
-                    
+                            <select class="form-control" id="customer_name" name="customer_name" required>
+                              <option value="{{ customer_name }}" selected>{{ customer_name }}</option>
+                              {% for customer in customer1 %}
+                                  <option class="text-light bg-black" value="{{ customer.customer_display_name }}">{{ customer.customer_display_name }}</option>
+                              {% endfor %}
+                          </select>
                           <a class="btn btn-outline-warning py-2" style="cursor: pointer;" data-toggle="modal" data-target="#newcustomer" >+</a>
                           </div>
                     </div>
@@ -394,63 +397,71 @@ li{
                 <div class="col-md-12 mt-3">
         
                   <table id="retainer-table" class="table table-bordered table-responsive"
-                    style="background-color: rgba(58, 57, 57, 0.8);">
+                    style="background-color: rgba(12, 11, 11, 0.8);">
                     <thead>
                       <tr>
-                        <th>Index number</th>
-                        <th>Item&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=""
-                            data-toggle="modal" data-target="#newitem" class="text-capitalize">+ Item</a></th>
-                        <th class="text-right">Description</th>
-                        <th class="text-right">Quantity</th>
-                        <th class="text-right">rate</th>
-                        <th class="text-right">Amount</th>
+                        <th>#</th>
+                        <th style="font-size: medium;">PRODUCT&nbsp;</th>
+                        <th style="font-size: medium;" class="text-right">DESCRIPTION</th>
+                        <th style="font-size: medium;" class="text-right">QUANTITY</th>
+                        <th style="font-size: medium;" class="text-right">RATE</th>
+                        <th style="font-size: medium;" class="text-right">AMOUNT</th>
                         <th></th>
                       </tr>
                     </thead>
                     <tbody id="tbody-table">
                         {% for item in retainer_items %}
                       <tr class="item-row" id="row1">
-                        <td style="border: none;width:3px;" class="index-number">1</td>
+                        <td style="width:1px;" class="index-number">1</td>
                         <td>
-                          <select class='form-control border-0 bg-transparent text-white item_select itm' name='item[]'
+                          <div style="display: flex; align-items: center;">
+                          <select class='form-control  text-white item_select itm' name='item[]'
                             id='item1' onchange="itemfunction(this.id)" style="background-color: black; color: white;">
                             <option value="" selected hidden>{{ item.itemname }} </option>
                            
                             <option class="text-black .name" value="{{i.id}}"></option>
                             
                           </select>
+                          <a href="#">
+                            <button type="button" class="btn btn-outline-warning ms-1" data-target="#newItem" data-toggle="modal">+</button>
+                        </a>
+                        </div>
                         </td>
-                        <td><input type="text" class="form-control bg-transparent border-0 bg-light text-light border-0"
+                        <td><input type="text" class="form-control   text-light "
                             name="description[]"  style="width: 60px;"  id="description1" />{{ item.description }}</td>
                         <td><input type="number" name="quantity[]" id="qty1"
-                            class="form-control bg-transparent text-white border-0 text-right qty"
-                            style="border: none;width: 100px;" onchange="calculateAmount(1)">{{ item.quantity }}
+                            class="form-control text-white text-right qty"
+                            style="width: 100px;" value="{{ item.quantity }}" onchange="calculateAmount(1)">
+                            <p style="font-size: 0.7rem;">Available Qty: <span id="available_stock"></span></p>
                         </td>
-                        <td><input type="number" class="rate form-control bg-transparent border-0 bg-light text-light border-0"
-                            name="rate[]" style="width: 80px;" step="0.01"  id="rate1" onchange="calculateAmount(1)"
-                            readonly />{{ item.rate }}</td>
+                        <td><input type="number" class="rate form-control text-light "
+                            name="rate[]" value="{{ item.rate }}" style="width: 80px;" step="0.01"  id="rate1" onchange="calculateAmount(1)"
+                            readonly /></td>
                         <td><input type="number"
-                            class="amount form-control bg-transparent border-0 bg-light text-light border-0" name="amount[]"
-                            style="width: 100px;" step="0.01"  id="amount1" readonly />{{ item.amount }}</td>
-                        <td class="text-center" style="display: grid;">
+                            class="amount form-control  text-light " name="amount[]"
+                            style="width: 100px;" step="0.01" value="{{ item.amount }}"  id="amount1" readonly /></td>
+                        <td class="text-center" >
                           <a href="#"
                             class="delete-row btn btn-transparent btn-outline-danger btn-sm rounded-circle text-danger"
-                            style="width: 30px;"><i class="fas fa-times"></i></a><br>
-                          <a href="#"
-                            class="clone-row btn btn-transparent btn-outline-primary btn-sm rounded-circle text-primary"
-                            style="width: 30px;"><i class="fas fa-clone"></i></a>
+                            style="width: 30px;"><i class="fa fa-trash text-danger"></i></a><br>
+                          
+                        </td>
+                      </tr>
+                      <tr class="blank-row">
+                        <td colspan="7">
+                          <button type="button" class="btn btn-outline-warning text-warning-emphasis" style="background-color: black;"
+                    id="add-another-line">
+                    +
+                  </button>
                         </td>
                       </tr>
                       {% endfor %}
                     </tbody>
-                    <th>&nbsp;Available Stock: <span id="available_stock"></span></th>
+                    
                   </table>
         
                   <br>
-                  <button type="button" class="btn btn-sm text-white" style="background-color: rgb(210, 132, 30);"
-                    id="add-another-line">
-                    Add another line
-                  </button>
+                 
         
                   <input type="hidden" id="hidden-total-amount" name="total" value="">
         
@@ -603,33 +614,37 @@ li{
                 <td class="index-number"style="width: 4px;">${itemCounter}</td>
           
                 <td>
-                  <select class='form-control border-0 bg-transparent text-white item_select itm' name='item[]'
+                  <div style="display: flex; align-items: center;">
+                  <select class='form-control text-white item_select itm' name='item[]'
                     id='item1' onchange="itemfunction(this.id)">
                     <option value="" selected hidden>Select Item</option>
                     {% for i in itm %}
                     <option class="text-black .name" value="{{i.id}}">{{ i.Name}} </option>
                     {% endfor %}
                   </select>
+                  <a href="#">
+                            <button type="button" class="btn btn-outline-warning ms-1" data-target="#newItem" data-toggle="modal">+</button>
+                        </a>
+                      </div>
                 </td>
-                <td><input type="text" class="form-control bg-transparent border-0 bg-light text-light border-0"
+                <td><input type="text" class="form-control text-light "
                     name="description[]" style="width: 60px;" required id="description1" /></td>
                 <td><input type="number" name="quantity[]" id="qty1"
-                    class="form-control bg-transparent text-white border-0 text-right qty"
-                    style="border: none;width: 60px;" onchange="calculateAmount(1)">
+                    class="form-control  text-white text-right qty"
+                    style="width: 100px;" onchange="calculateAmount(1)">
+                    <p style="font-size: 0.7rem;">Available Qty: <span id="available_stock"></span></p>
                 </td>
-                <td><input type="number" class="rate form-control bg-transparent border-0 bg-light text-light border-0"
+                <td><input type="number" class="rate form-control  text-light"
                     name="rate[]" style="width: 80px;" step="0.01" required id="rate1" onchange="calculateAmount(1)"
                     readonly /></td>
                 <td><input type="number"
-                    class="amount form-control bg-transparent border-0 bg-light text-light border-0" name="amount[]"
-                    style="width: 150px;" step="0.01" required id="amount1" readonly /></td>
+                    class="amount form-control text-light " name="amount[]"
+                    style="width: 100px;" step="0.01" required id="amount1" readonly /></td>
                 <td class="text-center" style="display: grid;">
                   <a href="#"
                     class="delete-row btn btn-transparent btn-outline-danger btn-sm rounded-circle text-danger"
-                    style="width: 30px;"><i class="fas fa-times"></i></a><br>
-                  <a href="#"
-                    class="clone-row btn btn-transparent btn-outline-primary btn-sm rounded-circle text-primary"
-                    style="width: 30px;"><i class="fas fa-clone"></i></a>
+                    style="width: 30px;"><i class="fa fa-trash text-danger"></i></a><br>
+                  
                 </td></tr>`
                 ;
                 //newRow.attr("id", "row" + itemCounter);
@@ -637,7 +652,7 @@ li{
                 // Clear input values in the new row (if needed)
                 //newRow.find("input").val("");
                 // Append the new row to the table
-                $("#tbody-table").append(newRow);
+                $(newRow).insertAfter("#tbody-table tr:first");
                  
             });
           
@@ -657,24 +672,22 @@ li{
     var newRow = `
       <tr id="row${rowCount}">
         <td>
-          <select class="form-control border-0 bg-transparent text-white item_select itm" name="item[]" id="item${rowCount}" onchange="itemfunction(this.id)">
+          <select class="form-control  text-white item_select itm" name="item[]" id="item${rowCount}" onchange="itemfunction(this.id)">
             <option value="" selected hidden>Select Item</option>
               {% for i in itm %}
               <option class="text-black .name" value="{{i.id}}">{{ i.Name}} </option>
               {% endfor %}
           </select>
         </td>
-        <td><input type="text" class="form-control bg-light text-light bg-transparent border-0" name="description[]" id="description${rowCount}"/></td> 
-        <td><input type="number" name="quantity[]" class="qty form-control bg-transparent text-white border-0 text-right" style="border: none;width: 100px;" id="qty${rowCount}" onchange="calculateAmount(${rowCount})"></td>
-        <td><input type="number" class="rate form-control bg-transparent border-0 bg-light text-light border-0" name="rate[]" style="width: 150px;" step="0.01" required id="rate${rowCount}" onchange="calculateAmount(${rowCount})" readonly/></td>
-        <td><input type="number" class="amount form-control bg-light text-light bg-transparent border-0" name="amount[]" step="0.01" style="width: 150px;" id="amount${rowCount}" readonly/></td>
+        <td><input type="text" class="form-control  text-light " name="description[]" id="description${rowCount}"/></td> 
+        <td><input type="number" name="quantity[]" class="qty form-control  text-white  text-right" style="width: 100px;" id="qty${rowCount}" onchange="calculateAmount(${rowCount})"></td>
+        <td><input type="number" class="rate form-control  text-light " name="rate[]" style="width: 150px;" step="0.01" required id="rate${rowCount}" onchange="calculateAmount(${rowCount})" readonly/></td>
+        <td><input type="number" class="amount form-control  text-light " name="amount[]" step="0.01" style="width: 150px;" id="amount${rowCount}" readonly/></td>
         <td class="text-center" style="display: grid;">
           <a href="#" class="delete-row btn btn-transparent btn-outline-danger btn-sm rounded-circle" style="width: 30px;">
             <i class="fas fa-times"></i>
           </a>
-          <a href="#" class="clone-row btn btn-transparent btn-outline-primary btn-sm rounded-circle" style="width: 30px;"> 
-            <i class="fas fa-clone"></i>
-          </a>
+          
           </td>
       </tr>`;
     $('#retainer-table tbody').append(newRow);
@@ -807,6 +820,43 @@ li{
 
             }
 
-          </script>
+
+            
+  $('#retainer-table').on('click', '.delete-row', function () {
+    event.preventDefault();
+    $(this).closest('tr').remove();
+    calculateTotalAmount();
+  });
+  <script>
+    $(document).ready(function () {
+        // Function to update related fields when a different customer is selected
+        $("#customer_name").change(function () {
+            var customerId = $(this).val();
+            $.ajax({
+                url: "{% url 'get_customer_details' %}",
+                type: "POST",
+                data: {
+                    csrfmiddlewaretoken: "{{ csrf_token }}",
+                    customer_id: customerId
+                },
+                dataType: "json",
+                success: function(response) {
+                    // Update other fields with the received data
+                    $('#customer_email').val(response.customer_email);
+                    $('#billing_address').val(response.billing_address);
+                    $('#gst_treatment').val(response.gst_treatment);
+                    $('#gst_number').val(response.gst_number);
+                    $('#place_of_supply').val(response.place_of_supply);
+                    // Update other fields as needed
+                },
+                error: function(xhr, errmsg, err) {
+                    console.log(xhr.status + ": " + xhr.responseText);
+                    // Handle error if necessary
+                }
+            });
+        });
+    });
+</script>
+
           
 {% endblock %}
