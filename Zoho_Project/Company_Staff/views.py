@@ -13138,7 +13138,8 @@ def new_retainer(request):
         units = Unit.objects.filter(company=company)
         accounts = Chart_of_Accounts.objects.filter(company=company)
         
-        
+        payment_terms = Company_Payment_Term.objects.filter(company=company)
+        print("Payment Terms:", payment_terms)  # Debugging statement
         # Get the last recorded RetainerInvoice based on logindetails
         # last_record = RetainerInvoice.objects.filter(logindetails=log_details).order_by('-id').first()
         print("last record:",last_record)
@@ -13181,7 +13182,9 @@ def new_retainer(request):
             'next_ret_number': next_ret_number,
             'item': item,
             'banks': banks,
+            'pTerms': payment_terms,  # Add payment terms data to the context
         }
+        
         return render(request, 'zohomodules/retainer_invoice/new_retainer.html', context)
     else:
         return redirect('/')
