@@ -375,7 +375,7 @@ urlpatterns = [
     path('retainer/<int:retainer_id>/history/', views.retainer_history, name='retainer_history'),
     path('downloadRetainerInvoiceSampleImportFile/',views.downloadRetainerInvoiceSampleImportFile, name='downloadRetainerInvoiceSampleImportFile'),
     path('importRetainerInvoiceFromExcel/',views.importRetainerInvoiceFromExcel, name='importRetainerInvoiceFromExcel'),
-    
+    path('get-customers/',views.get_customers, name='get_customers'),
     re_path(r'^static/(?P<path>.*)$', serve,{'document_root': settings.STATIC_ROOT}),
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS)

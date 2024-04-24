@@ -14,7 +14,7 @@
 
 <style>
 
-  
+
 
     #customer_sel + .selectize-control {
       width: 800px; 
@@ -4006,7 +4006,7 @@ $('#mphone').on('input', function() {
                     if($('#newCustomer').hasClass('show')){
                         $("#newCustomer .close_customer_modal").click()
                     }
-                    reloadCustomerDropdown(); // Call function to reload customer dropdown
+                    reloadCustomer(title, fName, lName);
                 }else{
                     alert(response.message)
                 }
@@ -4019,27 +4019,40 @@ $('#mphone').on('input', function() {
   });
   
 
-  function reloadCustomerDropdown() {
-    $.ajax({
-        url: "{% url 'getCustomersAjax' %}",
-        type: "GET",
-        dataType: "json",
-        data: {},
-        success: function(data) {
-            console.log('Ajax Response ->',data);
-            var custDropdown = $('#cust_drop');
-            custDropdown.empty();
-            custDropdown.append('<li class="dropdown-item customers-options text-white" onclick="getCustomerDetails(\'\',\'\')">Select Customer</li>');
+  function reloadCustomer(title,fName,lName) {
+      const fullName = title+' '+fName+' '+lName
+      $.ajax({
+          url: "{% url 'getCustomersAjax' %}",
+          type: "GET",
+          dataType: "json",
+          data: {},
 
-            $.each(data, function (key, value) {
-                custDropdown.append(`<li class="dropdown-item customers-options text-white" onclick="getCustomerDetails('${value[0]}','${value[1]} ${value[2]} ${value[3]}')">${value[1]} ${value[2]} ${value[3]}</li>`);
-            });
-            console.log('Customer dropdown reloaded');
-        },
-        error: function(xhr, status, error) {
-            console.error(xhr.responseText);
-        }
-    });
+          success: function(data) {
+              console.log('Ajax Response ->',data);
+              var custDrpDwn = $('#cust_drop');
+              custDrpDwn.empty();
+              custDrpDwn.append(`<li class="dropdown-item customers-options text-white" onclick="getCustomerDetails('','')">Select Customer</li>`);
+
+              $.each(data, function (key, value) {
+                  const customerDetails = `${value[1]} ${value[2]} ${value[3]}`;
+                  const ID = `${value[0]}`
+
+                  if(customerDetails == fullName){
+                      getCustomerDetails(value[0], customerDetails)
+                  }
+                  const listItem = $(`
+                      <li class="dropdown-item customers-options text-white" onclick="getCustomerDetails('${ID}', '${customerDetails}')">${customerDetails}</li>`
+                  );
+                  custDrpDwn.append(listItem);
+              });
+              console.log('Customers RELOADED');
+
+          },
+          error: function(xhr, status, error) {
+              console.error(xhr.responseText);
+          }
+
+      });
       // refreshCustomerDetails();
 
       if ($('#newpayment').hasClass('show')){

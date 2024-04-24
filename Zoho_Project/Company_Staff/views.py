@@ -14617,3 +14617,6 @@ def importRetainerInvoiceFromExcel(request):
             return redirect(retainer_list)
     else:
         return redirect('/')
+def get_customers(request):
+    customers = Customer.objects.filter(company=company).values('id', 'customer_display_name')
+    return JsonResponse(list(customers), safe=False)
