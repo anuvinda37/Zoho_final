@@ -26,6 +26,11 @@
 
                                                 
                                                 <style>
+
+
+ .dropdown-item:hover {
+        color: rgb(226, 149, 5);
+    }
                                                    .divider{
           margin: 1rem 0;
           border-bottom: 3px dotted black;
@@ -356,27 +361,15 @@
                        </a>
                        
                        <div class="dropdown-menu m-1" style="background-color: black; color: white;">
-                        <a class="dropdown-item text-white" href="">All</a>
-                        <a class="dropdown-item text-white" href="">Name</a>
-                        <a class="dropdown-item text-white" href="">Retainer Invoice
-                          Number</a>
+                        <a class="dropdown-item text-white" href="{% url 'retaineroverview' pk=invoice.pk %}">All</a>
+
+                        <a class="dropdown-item text-white" href="#" onclick="sortTable()">Name</a>
+                        <a class="dropdown-item text-white" href="#" onclick="sortTablebybillno()">Retainer Invoice Number</a>
                        </div>
                    </div>
                </div>
                
-               <div class="col-md-3" style="padding-left: 10px;">
-                   <div class="col-md-2 mt-2 mx-1" style="margin-left:3px;">
-                       <a class="btn text-center btn-outline-warning btn-sm" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" style=" height:34px;width:30px;">
-                           <i class="fa fa-filter" style="padding-top:2px; padding-bottom:1px; "></i>
-                       </a>
-               
-                       <div class="dropdown-menu m-1" style="background-color: #000;">
-                        <a class="dropdown-item text-white" href="">All</a>
-                        <a class="dropdown-item text-white" href="">Active</a>
-                        <a class="dropdown-item text-white" href="">Inactive</a>
-                       </div>
-                   </div>
-               </div>
+             
                <script>
                    function applyFilter(currentFilter) {
                                var rows = $("#table2 tbody tr");
@@ -386,7 +379,19 @@
                                }
                              }
                </script>
-               
+                 <div class="col-md-3" style="padding-left: 10px;">
+                  <div class="col-md-2 mt-2 mx-1" style="margin-left:3px;">
+                      <a class="btn text-center btn-outline-warning btn-sm" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" style=" height:34px;width:30px;">
+                          <i class="fa fa-filter" style="padding-top:2px; padding-bottom:1px; "></i>
+                      </a>
+              
+                      <div class="dropdown-menu m-1" style="background-color: #000;">
+                       <a class="dropdown-item" href="{% url 'retaineroverview' pk=invoice.pk %}">All</a>
+                       <a class="dropdown-item" href="{% url 'create_invoice_draft' %}">Draft</a>
+                       <a class="dropdown-item" href="{% url 'create_invoice_send' %}">Sent</a>
+                      </div>
+                  </div>
+              </div>
                <div class="col-md-3" style="padding-left: 254PX;margin-top:-42px;">
                    <a class="btn btn btn-outline-warning  btn-sm text-right mt-2" style="height: 35px; padding-top: 10px; padding-left:10px; padding-right:10px;"  style="font-size: small;" href="{% url 'new_retainer'%}">
                        <i class="fa fa-plus"></i>
@@ -415,9 +420,9 @@
                        <!-- <b ><a class="text-white"  href="">{{i.item_name}} </a></b>
                        <br>
                        <a class="text-white"  href="">{{i.hsn_code}}</a><br> -->
-                       <label class="text-left d-block"><a class="text-white"  href="">{{invoice.retainer_invoice_number}} </a></label>
+                       <label class="text-left d-block"><a class="text-white"  href="{% url 'retaineroverview' pk=invoice.id %}">{{invoice.retainer_invoice_number}} </a></label>
                        <br>
-                       <label class="text-left d-block"><a class="text-white"  href="">{{ invoice.customer_name.customer_display_name }}</a></label>
+                       <label class="text-left d-block"><a class="text-white"  href="{% url 'retaineroverview' pk=invoice.id %}">{{ invoice.customer_name.customer_display_name }}</a></label>
                   
                      </td>
                      
@@ -2537,6 +2542,80 @@ $(document).ready(function(){
     });
 });
 
+
+$(document).ready(function() {
+    // Add click event listener to table rows
+    $('.clickable').click(function() {
+        // Extract the ID of the clicked invoice
+        var invoiceId = $(this).attr('id');
+
+        // Redirect the user to the detailed view page of the clicked invoice
+        window.location.href = "{% url 'retaineroverview' pk=invoice.id %}";
+
+    });
+});
+
+function sortTable() {
+        var table, rows, switching, i, x, y, shouldSwitch;
+        table = document.getElementById("table2");
+        switching = true;
+        /* Make a loop that will continue until no switching has been done: */
+        while (switching) {
+            // Start by saying: no switching is done:
+            switching = false;
+            rows = table.rows;
+            /* Loop through all table rows (except the first, which contains table headers): */
+            for (i = 1; i < (rows.length - 1); i++) {
+                // Start by saying there should be no switching:
+                shouldSwitch = false;
+                /* Get the two elements you want to compare, one from current row and one from the next: */
+                x = rows[i].getElementsByTagName("TD")[0];
+                y = rows[i + 1].getElementsByTagName("TD")[0];
+                // Check if the two rows should switch place:
+                if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                    // If so, mark as a switch and break the loop:
+                    shouldSwitch = true;
+                    break;
+                }
+            }
+            if (shouldSwitch) {
+                /* If a switch has been marked, make the switch and mark that a switch has been done: */
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+            }
+        }
+    }
+
+    function sortTablebybillno() {
+        var table, rows, switching, i, x, y, shouldSwitch;
+        table = document.getElementById("table2");
+        switching = true;
+        /* Make a loop that will continue until no switching has been done: */
+        while (switching) {
+            // Start by saying: no switching is done:
+            switching = false;
+            rows = table.rows;
+            /* Loop through all table rows (except the first, which contains table headers): */
+            for (i = 1; i < (rows.length - 1); i++) {
+                // Start by saying there should be no switching:
+                shouldSwitch = false;
+                /* Get the two elements you want to compare, one from current row and one from the next: */
+                x = rows[i].getElementsByTagName("TD")[1];
+                y = rows[i + 1].getElementsByTagName("TD")[1];
+                // Check if the two rows should switch place:
+                if (Number(x.innerHTML) > Number(y.innerHTML)) {
+                    // If so, mark as a switch and break the loop:
+                    shouldSwitch = true;
+                    break;
+                }
+            }
+            if (shouldSwitch) {
+                /* If a switch has been marked, make the switch and mark that a switch has been done: */
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+            }
+        }
+    }
 </script>
 
 {% endblock %}
