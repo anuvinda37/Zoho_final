@@ -13809,6 +13809,8 @@ def shareRetainerInvoiceToEmail(request, id):
         # Return error message if any exception occurs
         return JsonResponse({'success': False, 'error': str(e)})
 
+from django.shortcuts import get_object_or_404
+
 def retainer_edit_page(request, retainer_id):
     if 'login_id' in request.session:
         login_id = request.session.get('login_id')
@@ -13827,8 +13829,9 @@ def retainer_edit_page(request, retainer_id):
         units = Unit.objects.filter(company=dash_details.company)
         accounts = Chart_of_Accounts.objects.filter(company=dash_details.company)
         
-        retainer = RetainerInvoice.objects.get(pk=retainer_id)
+        retainer = get_object_or_404(RetainerInvoice, pk=retainer_id)  # Use get_object_or_404 to handle 404 error
         
+        # Extracting customer details from retainer
         customer_name = retainer.customer_name.customer_display_name
         customer_email = retainer.customer_name.customer_email
         billing_address = retainer.customer_name.billing_address
@@ -13837,20 +13840,28 @@ def retainer_edit_page(request, retainer_id):
         place_of_supply = retainer.customer_name.place_of_supply
         retainer_invoice_date = retainer.retainer_invoice_date
 
+        # Retrieving retainer items
         retainer_items = Retaineritems.objects.filter(retainer=retainer)
         total_amount = retainer.total_amount
         customer_notes = retainer.customer_notes
         terms_conditions = retainer.terms_and_conditions
         balance = retainer.balance
-        
+        items = Items.objects.filter(company=dash_details.company)
+
+        # Payment methods and banks
         payment_methods = ['cash', 'cheque', 'upi']
         banks = Banking.objects.filter(company=dash_details.company).values_list('bnk_name', flat=True)
         payment_details = retainer_payment_details.objects.filter(retainer=retainer).first()
         customers = Customer.objects.all()
         
         if request.method == 'POST':
-            customer_name = request.POST.get('customer_name')
-            customer = Customer.objects.get(customer_display_name=customer_name)
+            customer_id = request.POST.get('customer_id')
+            try:
+                customer = Customer.objects.get(pk=customer_id)
+            except Customer.DoesNotExist:
+                return HttpResponse("Customer does not exist")
+
+            # Update retainer details
             retainer.customer_name = customer
             retainer.retainer_invoice_number = request.POST.get('retainer-invoice-number')
             retainer.invoice_date = request.POST.get('invoicedate')
@@ -13863,6 +13874,14 @@ def retainer_edit_page(request, retainer_id):
             retainer.amount_paid = request.POST.get('paid')
             retainer.balance = request.POST.get('balance')
             retainer.save()
+
+            # Update retainer items
+            for item in retainer_items:
+                item.quantity = request.POST.get(f'quantity_{item.id}')
+                item.price = request.POST.get(f'price_{item.id}')
+                item.discount = request.POST.get(f'discount_{item.id}')
+                item.save()
+
             return redirect('retaineroverview', pk=retainer.id)
         else:
             context = {
@@ -13877,7 +13896,7 @@ def retainer_edit_page(request, retainer_id):
                 'gst_number': gst_number,
                 'place_of_supply': place_of_supply,
                 'retainer_invoice_number': retainer.retainer_invoice_number,
-                'reford':retainer.refrences,
+                'reford': retainer.refrences,
                 'retainer_invoice_date': retainer_invoice_date,
                 'payment_methods': payment_methods,
                 'banks': banks,
@@ -13887,7 +13906,8 @@ def retainer_edit_page(request, retainer_id):
                 'customer_notes': customer_notes,
                 'terms_conditions': terms_conditions,
                 'balance': balance,
-                'customer1': customers,  # Pass the customers queryset to the template context
+                'customer1': customers,  
+                'items': items,
             }
           
             return render(request, 'zohomodules/retainer_invoice/retainer_invoice_edit.html', context)

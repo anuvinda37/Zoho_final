@@ -419,7 +419,9 @@ li{
                             id='item1' onchange="itemfunction(this.id)" style="background-color: black; color: white;">
                             <option value="" selected hidden>{{ item.itemname }} </option>
                            
-                            <option class="text-black .name" value="{{i.id}}"></option>
+                            {% for item in items %}
+                                <option class="text-light .name" value="{{ item.id }}">{{ item.item_name }}</option>
+                            {% endfor %}
                             
                           </select>
                           <a href="#">
