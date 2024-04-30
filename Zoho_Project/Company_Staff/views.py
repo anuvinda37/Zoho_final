@@ -13317,10 +13317,24 @@ def itemdata_ri(request):
     except Items.DoesNotExist:
         return JsonResponse({"status": "error", "message": "Item not found"})
 def get_bank_details(request):
-    bank_name = request.GET.get('bank_name')
-    bank = Banking.objects.get(bnk_name=bank_name)
-    data = {'bnk_acno': bank.bnk_acno}
-    return JsonResponse(data)
+    if 'login_id' in request.session:
+        if request.session.has_key('login_id'):
+            log_id = request.session['login_id']           
+        else:
+            return redirect('/')
+        
+        log_details= LoginDetails.objects.get(id=log_id)
+        
+        if log_details.user_type=='Staff':
+            staff_details=StaffDetails.objects.get(login_details=log_details)
+            dash_details = CompanyDetails.objects.get(id=staff_details.company.id)
+        else:    
+            dash_details = CompanyDetails.objects.get(login_details=log_details)
+        bank_name = request.GET.get('bank_name')
+        bank = Banking.objects.get(bnk_name=bank_name,company=dash_details,
+                    login_details=log_details)
+        data = {'bnk_acno': bank.bnk_acno}
+        return JsonResponse(data)
 
 
 # def create_invoice_draft(request):
@@ -13824,92 +13838,119 @@ def retainer_edit_page(request, retainer_id):
         elif log_details.user_type == 'Company':
             dash_details = CompanyDetails.objects.get(login_details=log_details)
         
-        item = Items.objects.filter(company=dash_details.company)
-        allmodules = ZohoModules.objects.get(company=dash_details.company, status='New')
-        units = Unit.objects.filter(company=dash_details.company)
-        accounts = Chart_of_Accounts.objects.filter(company=dash_details.company)
-        
-        retainer = get_object_or_404(RetainerInvoice, pk=retainer_id)  # Use get_object_or_404 to handle 404 error
-        
-        # Extracting customer details from retainer
-        customer_name = retainer.customer_name.customer_display_name
-        customer_email = retainer.customer_name.customer_email
-        billing_address = retainer.customer_name.billing_address
-        gst_treatment = retainer.customer_name.GST_treatement
-        gst_number = retainer.customer_name.GST_number
-        place_of_supply = retainer.customer_name.place_of_supply
-        retainer_invoice_date = retainer.retainer_invoice_date
-
-        # Retrieving retainer items
+        retainer = get_object_or_404(RetainerInvoice, pk=retainer_id)
         retainer_items = Retaineritems.objects.filter(retainer=retainer)
-        total_amount = retainer.total_amount
-        customer_notes = retainer.customer_notes
-        terms_conditions = retainer.terms_and_conditions
-        balance = retainer.balance
-        items = Items.objects.filter(company=dash_details.company)
-
-        # Payment methods and banks
-        payment_methods = ['cash', 'cheque', 'upi']
-        banks = Banking.objects.filter(company=dash_details.company).values_list('bnk_name', flat=True)
-        payment_details = retainer_payment_details.objects.filter(retainer=retainer).first()
-        customers = Customer.objects.all()
         
         if request.method == 'POST':
+            # Extract data from the request
             customer_id = request.POST.get('customer_id')
-            try:
-                customer = Customer.objects.get(pk=customer_id)
-            except Customer.DoesNotExist:
-                return HttpResponse("Customer does not exist")
+            customer_mailid = request.POST.get('cx_mail')
+            retainer_invoice_number = request.POST.get('retainer-invoice-number')
+            references = request.POST.get('references')
+            retainer_invoice_date = request.POST.get('invoicedate')
+            total_amount = request.POST.get('total')
+            bal_amount = request.POST.get('balance')
+            customer_notes = request.POST.get('customer_notes')
+            terms_and_conditions = request.POST.get('terms')
+            paid = request.POST.get('paid')
+            pay_method = request.POST.get('pay_method')
+            acc_no = request.POST.get('acc_no', '')
+            cheque_no = request.POST.get('chq_no', '')
+            upi_id = request.POST.get('upi_id', '')
 
-            # Update retainer details
-            retainer.customer_name = customer
-            retainer.retainer_invoice_number = request.POST.get('retainer-invoice-number')
-            retainer.invoice_date = request.POST.get('invoicedate')
-            retainer.payment_method = request.POST.get('pay_method')
-            retainer.cheque_number = request.POST.get('chq_no')
-            retainer.upi_id = request.POST.get('upi_id')
-            retainer.bank_account_number = request.POST.get('acc_no')
-            retainer.customer_notes = request.POST.get('customer_notes')
-            retainer.terms_conditions = request.POST.get('terms')
-            retainer.amount_paid = request.POST.get('paid')
-            retainer.balance = request.POST.get('balance')
+            # Ensure request.user is a User instance
+            created_by = LoginDetails.objects.get(id=login_id)
+
+            # Update the RetainerInvoice instance with new data
+            retainer.customer_name_id = customer_id
+            retainer.customer_mailid = customer_mailid
+            retainer.retainer_invoice_number = retainer_invoice_number
+            retainer.refrences = references
+            retainer.retainer_invoice_date = retainer_invoice_date
+            retainer.total_amount = total_amount
+            retainer.balance = bal_amount
+            retainer.customer_notes = customer_notes
+            retainer.terms_and_conditions = terms_and_conditions
+            retainer.paid = paid
+            # Update the payment method details
+            if pay_method:
+                ret_payment, _ = retainer_payment_details.objects.get_or_create(retainer=retainer)
+                ret_payment.payment_opt = pay_method
+                ret_payment.acc_no = acc_no
+                ret_payment.cheque_no = cheque_no
+                ret_payment.upi_id = upi_id
+                ret_payment.save()
+
+            retainer.modified_at = timezone.now()
+            retainer.modified_by = created_by
             retainer.save()
 
-            # Update retainer items
-            for item in retainer_items:
-                item.quantity = request.POST.get(f'quantity_{item.id}')
-                item.price = request.POST.get(f'price_{item.id}')
-                item.discount = request.POST.get(f'discount_{item.id}')
-                item.save()
+            Retaineritems.objects.filter(retainer=retainer).delete()
 
+            # Update or create Retaineritems instances for each item received in the POST request
+            description = request.POST.getlist('description[]')
+            amount = request.POST.getlist('amount[]')
+            item_ids = request.POST.getlist('item[]')
+            qty = request.POST.getlist('quantity[]')
+            rate = request.POST.getlist('rate[]')
+
+            for i in range(len(description)):
+                item = Items.objects.get(id=item_ids[i])
+                ret_item = Retaineritems(
+                    retainer=retainer,
+                    itemname=item.item_name,
+                    description=description[i],
+                    amount=amount[i],
+                    quantity=qty[i],
+                    rate=rate[i]
+                )
+                ret_item.save()
+            # Redirect to retainer_list.html after saving
             return redirect('retaineroverview', pk=retainer.id)
+        
+        # If request method is GET, render the edit page with retainer details
         else:
+            retainer_items = retainer.retaineritems_set.all()
+            # Fetch other details related to the retainer invoice
+            customer_name = retainer.customer_name.customer_display_name
+            customer_email = retainer.customer_name.customer_email
+            billing_address = retainer.customer_name.billing_address
+            gst_treatment = retainer.customer_name.GST_treatement
+            gst_number = retainer.customer_name.GST_number
+            place_of_supply = retainer.customer_name.place_of_supply
+            retainer_invoice_date = retainer.retainer_invoice_date
+            total_amount = retainer.total_amount
+            customer_notes = retainer.customer_notes
+            terms_conditions = retainer.terms_and_conditions
+            balance = retainer.balance
+            payment_methods = ['cash', 'cheque', 'upi']
+            banks = Banking.objects.filter(company=dash_details.company).values_list('bnk_name', flat=True)
+            payment_details = retainer_payment_details.objects.filter(retainer=retainer).first()
+            customers = Customer.objects.all()
+            items = Items.objects.filter(company=dash_details.company)
+
             context = {
                 'retainer': retainer,
-                'units': units,
-                'allmodules': allmodules,
-                'accounts': accounts,
                 'customer_name': customer_name,
                 'customer_email': customer_email,
                 'billing_address': billing_address,
                 'gst_treatment': gst_treatment,
                 'gst_number': gst_number,
                 'place_of_supply': place_of_supply,
-                'retainer_invoice_number': retainer.retainer_invoice_number,
-                'reford': retainer.refrences,
+                'retainer_invoice_number': retainer.retainer_invoice_number, 
                 'retainer_invoice_date': retainer_invoice_date,
-                'payment_methods': payment_methods,
-                'banks': banks,
-                'payment_details': payment_details,
-                'retainer_items': retainer_items,
                 'total_amount': total_amount,
                 'customer_notes': customer_notes,
                 'terms_conditions': terms_conditions,
                 'balance': balance,
-                'customer1': customers,  
+                'payment_methods': payment_methods,
+                'banks': banks,
+                'payment_details': payment_details,
+                'retainer_items': retainer_items,
+                'customer1': customers,
                 'items': items,
             }
-          
+
             return render(request, 'zohomodules/retainer_invoice/retainer_invoice_edit.html', context)
     else:
         return redirect('/')

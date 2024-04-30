@@ -14,7 +14,7 @@
 
 <style>
 
-
+    
 
     #customer_sel + .selectize-control {
       width: 800px; 
@@ -50,7 +50,17 @@
       padding: 2px 6px;
     }
 
-    
+    #customer_sel + .selectize-control .selectize-dropdown-content .option:hover {
+  background-color: white !important;
+  color: black !important;
+}
+
+
+
+#item1 + .selectize-control .selectize-dropdown-content .option:hover {
+  background-color: white !important;
+  color: black !important;
+}
 
     #item1 + .selectize-control {
       width: 200px; 
@@ -639,7 +649,7 @@ li{
                   <input type="text" style="width: 30%;display: none;" id="customer_id" name="customer_id" readonly>  
                 </div>
                   <br>
-
+                
                   <div class="form-group row" id="address_row">
                     
                     <div class="col-md-3"><b><label for=""style="color: aliceblue; font-size: medium;" >Billing Address</label></b></div>
@@ -2607,31 +2617,39 @@ li{
 
 
               <script>
-                function getCustomerDetails(customerId) {
-                    $.ajax({
-                        url: "{% url 'get_customer_details' %}",
-                        type: "POST",
-                        data: {
-                            csrfmiddlewaretoken: "{{ csrf_token }}",
-                            customer_id: customerId
-                        },
-                        dataType: "json",
-                        success: function(response) {
-                            // Update other fields with the received data
-                            $('#cx_mail').val(response.customer_email);
-                            $('#customer_gst_treat').val(response.gst_treatment);
-                            $('#customer_gstno').val(response.gstin);
-                            $('#customer_address').val(response.customer_address);
-                            $('#customer_id').val(customerId);
-                            $('#cus_place1').val(response.place_of_supply);
-                            // Update other fields as needed
-                        },
-                        error: function(xhr, errmsg, err) {
-                            console.log(xhr.status + ": " + xhr.responseText);
-                            // Handle error if necessary
-                        }
-                    });
-                }
+               function getCustomerDetails(customerId) {
+    $.ajax({
+        url: "{% url 'get_customer_details' %}",
+        type: "POST",
+        data: {
+            csrfmiddlewaretoken: "{{ csrf_token }}",
+            customer_id: customerId
+        },
+        dataType: "json",
+        success: function(response) {
+            $('#cx_mail').val(response.customer_email);
+            $('#customer_gst_treat').val(response.gst_treatment);
+            $('#customer_gstno').val(response.gstin);
+            $('#cus_place1').val(response.place_of_supply);
+
+            // Check if Billing Address exists in the response
+            if (response.customer_address) {
+                $('#address_row').show();  // Show the Billing Address row
+                $('#customer_address').val(response.customer_address);
+            } else {
+                $('#address_row').hide();  // Hide the Billing Address row
+            }
+            
+            $('#customer_id').val(customerId);
+            // Update other fields as needed
+        },
+        error: function(xhr, errmsg, err) {
+            console.log(xhr.status + ": " + xhr.responseText);
+            // Handle error if necessary
+        }
+    });
+}
+
                 </script>
                 <script>  document.getElementById('dateField').valueAsDate = new Date();</script>
           
@@ -4211,23 +4229,23 @@ $('#mphone').on('input', function() {
               }
           }
 
-$(document).ready(function () {
-    $("#prof_name").keyup(function () {
-      var x = $('#prof_name').val();
-      reford = "{{reference}}"
-      if (reford != '01') {
-        if (reford != x) {
-          document.getElementById("order_label").style.display = "block"
-          document.getElementById("order_label").style.color = "yellow"
-          document.getElementById("order_label").innerHTML = "Retainer invoice is not Continuous"
-        } else {
-          document.getElementById("order_label").style.display = "block"
-          document.getElementById("order_label").style.color = "green"
-          document.getElementById("order_label").innerHTML = "Retainer invoice is now Continuous"
-        }
-      }
-    });
-  });
+// $(document).ready(function () {
+//     $("#prof_name").keyup(function () {
+//       var x = $('#prof_name').val();
+//       reford = "{{reference}}"
+//       if (reford != '01') {
+//         if (reford != x) {
+//           document.getElementById("order_label").style.display = "block"
+//           document.getElementById("order_label").style.color = "yellow"
+//           document.getElementById("order_label").innerHTML = "Retainer invoice is not Continuous"
+//         } else {
+//           document.getElementById("order_label").style.display = "block"
+//           document.getElementById("order_label").style.color = "green"
+//           document.getElementById("order_label").innerHTML = "Retainer invoice is now Continuous"
+//         }
+//       }
+//     });
+//   });
 
   $('#retainer-table').on('click', '.delete-row', function () {
     event.preventDefault();
@@ -4239,5 +4257,5 @@ $(document).ready(function () {
 
   
           </script>
-          
+       
 {% endblock %}
