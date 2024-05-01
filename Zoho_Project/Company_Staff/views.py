@@ -13146,21 +13146,38 @@ def new_retainer(request):
         # Initialize next retainer invoice number
         next_ret_number = ''
         
-        # Check if there's an existing last record
-        if last_record:
-            # Extract the last retainer invoice number
-            last_ret_number = last_record.retainer_invoice_number
-            # Extract prefix and number from the last retainer invoice number
-            prefix = ''
-            number = last_ret_number
-            if last_ret_number[:2].isalpha():
-                prefix = last_ret_number[:2]
-                number = last_ret_number[2:]
-            # Increment the number for the next retainer invoice
-            number = str(int(number) + 1).zfill(len(number))
-            # Combine prefix and number for the next retainer invoice number
-            next_ret_number = f"{prefix}{number}"
-        
+        lastSalesNo = ''
+        if last_record ==None:
+            reference = '01'
+            remaining_characters=''
+            
+        else:
+            lastSalesNo = last_record.retainer_invoice_number
+            last_two_numbers = int(lastSalesNo[-2:])+1
+            for i in range(len(lastSalesNo)-1,-1,-1):
+                if not lastSalesNo[i].isdigit():
+                    last_digit_index=i+1
+                    break
+            prefix=lastSalesNo[:last_digit_index]
+            number=int(lastSalesNo[last_digit_index:])
+            number+=1
+            enumber=str(number).zfill(3)
+            next_ret_number=f"{prefix}{enumber}"
+            print(next_ret_number)
+            # print("lastSalesNo:", lastSalesNo)  # Print lastSalesNo to the terminal
+            last_two_numbers = int(lastSalesNo[-2:])+1
+            # print(last_two_numbers)
+            remaining_characters = lastSalesNo[:-2]  
+            if remaining_characters == '':
+                if last_two_numbers < 10:
+                    reference = '0'+str(last_two_numbers)
+                else:
+                    reference = str(last_two_numbers)
+            else:
+                if last_two_numbers < 10:
+                    reference = remaining_characters+'0'+str(last_two_numbers)
+                else:
+                    reference = remaining_characters+str(last_two_numbers)
         # Get the last reference from retInvoiceReference
         last_reference = retInvoiceReference.objects.filter(company=company).last()
         if last_reference is None:
