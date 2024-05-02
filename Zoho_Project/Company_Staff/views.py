@@ -13062,38 +13062,56 @@ def delete_godown(request,pk):
     return redirect('list_godown')
 
 
-
 def retainer_list(request):
     if 'login_id' in request.session:
-        login_id = request.session['login_id']
-        if 'login_id' not in request.session:
-            return redirect('/')
-        log_details = LoginDetails.objects.get(id=login_id)
-        if log_details.user_type == 'Staff':
-            dash_details = StaffDetails.objects.get(login_details=log_details)
-            item = Items.objects.filter(company=dash_details.company)
-            allmodules = ZohoModules.objects.get(company=dash_details.company, status='New')
-            invoices = RetainerInvoice.objects.filter(user=request.user.id).order_by('-id')
-        elif log_details.user_type == 'Company':
+        log_id = request.session['login_id']
+        log_details= LoginDetails.objects.get(id=log_id)
+        if log_details.user_type == 'Company':
+            cmp = CompanyDetails.objects.get(login_details = log_details)
             dash_details = CompanyDetails.objects.get(login_details=log_details)
-            item = Items.objects.filter(company=dash_details)
-            allmodules = ZohoModules.objects.get(company=dash_details, status='New')
-            invoices = RetainerInvoice.objects.filter(company=dash_details).order_by('-id')
         else:
-            return redirect('/')
-        
-        # Prepare the context to pass to the template
+            cmp = StaffDetails.objects.get(login_details = log_details).company
+            dash_details = StaffDetails.objects.get(login_details=log_details)
+
+        rec = RetainerInvoice.objects.filter(company = cmp)
+        allmodules= ZohoModules.objects.get(company = cmp,status='New')
         context = {
-            'details': dash_details,
-            'item': item,
-            'allmodules': allmodules,
-            'invoices': invoices,
+            'invoices': rec, 'allmodules':allmodules, 'details':dash_details
         }
-        
-        # Render the template with the context data
         return render(request, 'zohomodules/retainer_invoice/retainer_list.html', context)
     else:
         return redirect('/')
+# def retainer_list(request):
+#     if 'login_id' in request.session:
+#         login_id = request.session['login_id']
+#         if 'login_id' not in request.session:
+#             return redirect('/')
+#         log_details = LoginDetails.objects.get(id=login_id)
+#         if log_details.user_type == 'Staff':
+#             dash_details = StaffDetails.objects.get(login_details=log_details)
+#             item = Items.objects.filter(company=dash_details.company)
+#             allmodules = ZohoModules.objects.get(company=dash_details.company, status='New')
+#             invoices = RetainerInvoice.objects.filter(user=request.user.id).order_by('-id')
+#         elif log_details.user_type == 'Company':
+#             dash_details = CompanyDetails.objects.get(login_details=log_details)
+#             item = Items.objects.filter(company=dash_details)
+#             allmodules = ZohoModules.objects.get(company=dash_details, status='New')
+#             invoices = RetainerInvoice.objects.filter(company=dash_details).order_by('-id')
+#         else:
+#             return redirect('/')
+        
+#         # Prepare the context to pass to the template
+#         context = {
+#             'details': dash_details,
+#             'item': item,
+#             'allmodules': allmodules,
+#             'invoices': invoices,
+#         }
+        
+#         # Render the template with the context data
+#         return render(request, 'zohomodules/retainer_invoice/retainer_list.html', context)
+#     else:
+#         return redirect('/')
 
 
 
@@ -13110,7 +13128,8 @@ def new_retainer(request):
         if 'login_id' not in request.session:
             return redirect('/')
         log_details = LoginDetails.objects.get(id=login_id)
-        
+        # Add this print statement to check the log_details
+        print("Login Details:", log_details)
         if log_details.user_type == 'Staff':
             staff_id = request.session['login_id']
             try:
