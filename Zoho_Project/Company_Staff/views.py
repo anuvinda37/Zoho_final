@@ -13069,19 +13069,16 @@ def retainer_list(request):
         if 'login_id' not in request.session:
             return redirect('/')
         log_details = LoginDetails.objects.get(id=login_id)
-        user = request.user
-        log_details = LoginDetails.objects.get(email=user.email)
-        company = CompanyDetails.objects.get(login_details=log_details)
         if log_details.user_type == 'Staff':
-            dash_details = StaffDetails.objects.get(login_details=log_details)
+            dash_details = StaffDetails.objects.get(login_details=log_details).company
             item = Items.objects.filter(company=dash_details.company)
             allmodules = ZohoModules.objects.get(company=dash_details.company, status='New')
-            invoices = RetainerInvoice.objects.filter(user=user)
+            invoices = RetainerInvoice.objects.filter(user=request.user.id).order_by('-id')
         elif log_details.user_type == 'Company':
             dash_details = CompanyDetails.objects.get(login_details=log_details)
             item = Items.objects.filter(company=dash_details)
             allmodules = ZohoModules.objects.get(company=dash_details, status='New')
-            invoices = RetainerInvoice.objects.filter(company=company)
+            invoices = RetainerInvoice.objects.filter(company=dash_details).order_by('-id')
         else:
             return redirect('/')
         
@@ -13118,8 +13115,8 @@ def new_retainer(request):
         if log_details.user_type == 'Staff':
             staff_id = request.session['login_id']
             try:
-                staff = StaffDetails.objects.get(login_details=log_details)
-                company = staff.company
+                staff = StaffDetails.objects.get(login_details=log_details).company
+                company = StaffDetails.objects.get(login_details=log_details)
                 dash_details = staff
                 customers = Customer.objects.filter(company=company)
                 last_record = RetainerInvoice.objects.filter(user=request.user.id).order_by('-id').first()  # Use .first() to get a single instance
@@ -13129,7 +13126,7 @@ def new_retainer(request):
             company_id = request.session['login_id']
             try:
                 company = CompanyDetails.objects.get(login_details=log_details)
-                dash_details = company
+                dash_details = CompanyDetails.objects.get(login_details=log_details)
                 customers = Customer.objects.filter(company=company)
                 last_record = RetainerInvoice.objects.filter(company=dash_details).order_by('-id').first()  # Use .first() to get a single instance
             except CompanyDetails.DoesNotExist:
@@ -13593,10 +13590,6 @@ def create_invoice_send(request):
         else:    
             dash_details = CompanyDetails.objects.get(login_details=log_details)
         
-        user = request.user
-        log_details = LoginDetails.objects.get(email=user.email)
-        company = CompanyDetails.objects.get(login_details=log_details)
-
         if request.method == 'POST':
             # Extract data from the request
             customer_id = request.POST.get('customer_id')
@@ -13616,12 +13609,9 @@ def create_invoice_send(request):
 
             # Ensure request.user is a User instance
             created_by = LoginDetails.objects.get(id=log_id)  # No need to check if it's in session since it's checked above
-
+            
             # Create a new instance of RetainerInvoice
             retainer_invoice = RetainerInvoice(
-                user=user,
-                logindetails=log_details,
-                company=company,
                 customer_name_id=customer_id,  # Assuming customer_name is a ForeignKey
                 customer_mailid=customer_mailid,
                 retainer_invoice_number=retainer_invoice_number,
