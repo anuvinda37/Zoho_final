@@ -21,7 +21,7 @@
                                                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css">
                                                 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
                                                 
-
+                                                
 
 
                                                 
@@ -607,7 +607,7 @@
   
       <div class="row" id="div-to-pdf"
         style="background-color: #c4c1c1fd;  height: auto; margin-left:1px; margin-right: 1rem; width: 700px;  ">
-  
+        
         <div class="row text-center">
           <h2 style="color: #000000;"><br>RETAINER INVOICE  
             <hr>
@@ -845,12 +845,26 @@
       <div class="my-3 page"  style="background-color: white; width:700px; "
           id="selected-area">
           <div class="p-5">
-              <div style="background-color: rgb(240, 190, 26);border-radius: 1rem;padding: 20px;">
+              <div style="background-color: #ffae1f;border-radius: 1rem;padding: 20px;">
+  
+                <div  class="bg-white text-black "style="width:60px; text-align:center;">
+                {% for invoice in invoices %}
+          {% if invoice.is_sent == False %}
+          <label style class="text-left d-block text-dark">Draft</label>
+          {% else %}
+          <label class="text-left d-block text-dark">Saved</label>
+          {% endif %}
+          {% endfor %}
+        </div>
                   <center class="h3 text-white"><b>RETAINER INVOICE</b></center>
+                  <div style="margin-left: 500px;">
+                  <p class="text-right">{{invoice.retainer_invoice_number }}</p>
+                </div>
               </div>
+             
               <div class="row mt-5">
                   <div class="col-md-8">
-                      <h4 class="text-secondary" style="font-weight: bold;">
+                      <h4 class="text-dark" style="font-weight: bold;">
                         {{ details.company.company_name }}</h4>
                       <p class="address" style="font-weight: bold;color: #000;">
                         {{ details.company.address }}<br>

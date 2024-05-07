@@ -13070,10 +13070,10 @@ def retainer_list(request):
             return redirect('/')
         log_details = LoginDetails.objects.get(id=login_id)
         if log_details.user_type == 'Staff':
-            dash_details = StaffDetails.objects.get(login_details=log_details).company
+            dash_details = StaffDetails.objects.get(login_details=log_details)
             item = Items.objects.filter(company=dash_details.company)
             allmodules = ZohoModules.objects.get(company=dash_details.company, status='New')
-            invoices = RetainerInvoice.objects.filter(user=request.user.id).order_by('-id')
+            invoices = RetainerInvoice.objects.filter(logindetails=log_details).order_by('-id')
         elif log_details.user_type == 'Company':
             dash_details = CompanyDetails.objects.get(login_details=log_details)
             item = Items.objects.filter(company=dash_details)
@@ -13115,8 +13115,8 @@ def new_retainer(request):
         if log_details.user_type == 'Staff':
             staff_id = request.session['login_id']
             try:
-                staff = StaffDetails.objects.get(login_details=log_details).company
-                company = StaffDetails.objects.get(login_details=log_details)
+                staff = StaffDetails.objects.get(login_details=log_details)
+                company = staff.company
                 dash_details = staff
                 customers = Customer.objects.filter(company=company)
                 last_record = RetainerInvoice.objects.filter(user=request.user.id).order_by('-id').first()  # Use .first() to get a single instance
@@ -13126,7 +13126,7 @@ def new_retainer(request):
             company_id = request.session['login_id']
             try:
                 company = CompanyDetails.objects.get(login_details=log_details)
-                dash_details = CompanyDetails.objects.get(login_details=log_details)
+                dash_details = company
                 customers = Customer.objects.filter(company=company)
                 last_record = RetainerInvoice.objects.filter(company=dash_details).order_by('-id').first()  # Use .first() to get a single instance
             except CompanyDetails.DoesNotExist:
@@ -13473,10 +13473,11 @@ def create_invoice_draft(request):
         
         if log_details.user_type=='Staff':
             staff_details=StaffDetails.objects.get(login_details=log_details)
+            company=staff_details.company
             dash_details = CompanyDetails.objects.get(id=staff_details.company.id)
         else:    
-            dash_details = CompanyDetails.objects.get(login_details=log_details)
-        
+            company=CompanyDetails.object.get(login_details=log_details)
+            dash_details = company
         if request.method == 'POST':
             # Extract data from the request
             customer_id = request.POST.get('customer_id')
@@ -13515,6 +13516,8 @@ def create_invoice_draft(request):
                 modified_at=timezone.now(),  # Assuming modified_at is set to current time when created
                 created_by=created_by,
                 modified_by=created_by,  # Initially set modified_by to created_by
+                logindetails=log_details,
+                company=company, 
             )
 
             # Use transaction.atomic() to ensure atomicity of the operations
@@ -13586,9 +13589,11 @@ def create_invoice_send(request):
         
         if log_details.user_type == 'Staff':
             staff_details=StaffDetails.objects.get(login_details=log_details)
+            company=staff_details.company
             dash_details = CompanyDetails.objects.get(id=staff_details.company.id)
         else:    
-            dash_details = CompanyDetails.objects.get(login_details=log_details)
+            company=CompanyDetails.object.get(login_details=log_details)
+            dash_details = company
         
         if request.method == 'POST':
             # Extract data from the request
@@ -13628,6 +13633,8 @@ def create_invoice_send(request):
                 modified_at=timezone.now(),  # Assuming modified_at is set to current time when created
                 created_by=created_by,
                 modified_by=created_by,  # Initially set modified_by to created_by
+                logindetails=log_details,
+                company=company, 
             )
 
             # Use transaction.atomic() to ensure atomicity of the operations
@@ -13699,21 +13706,22 @@ def retaineroverview(request, pk=None):
                 return redirect('/')
             
             log_details = LoginDetails.objects.get(id=login_id)
-            
+            invoices=None
             if log_details.user_type == 'Staff':
                 dash_details = StaffDetails.objects.get(login_details=log_details)
                 item = Items.objects.filter(company=dash_details.company)
-       
+                invoices = RetainerInvoice.objects.filter(logindetails=log_details).order_by('-id')
                 allmodules = ZohoModules.objects.get(company=dash_details.company,status='New')
                 units = Unit.objects.filter(company=dash_details.company)
                 accounts = Chart_of_Accounts.objects.filter(company=dash_details.company)
             elif log_details.user_type == 'Company':
                 dash_details = CompanyDetails.objects.get(login_details=log_details)
-                item = Items.objects.filter(company=dash_details.company)
+                item = Items.objects.filter(company=dash_details)
        
-                allmodules = ZohoModules.objects.get(company=dash_details.company,status='New')
-                units = Unit.objects.filter(company=dash_details.company)
-                accounts = Chart_of_Accounts.objects.filter(company=dash_details.company)
+                allmodules = ZohoModules.objects.get(company=dash_details,status='New')
+                units = Unit.objects.filter(company=dash_details)
+                accounts = Chart_of_Accounts.objects.filter(company=dash_details)
+                invoices = RetainerInvoice.objects.filter(company=dash_details).order_by('-id')
 
                 
             invoice = RetainerInvoice.objects.get(pk=pk)
@@ -13733,7 +13741,7 @@ def retaineroverview(request, pk=None):
             # Print the retainer object here
             print(invoice)
             history_entries = RetainerInvoice.objects.filter(id=pk).order_by('modified_at') 
-            invoices = RetainerInvoice.objects.select_related('customer_name').all()
+            # invoices = RetainerInvoice.objects.select_related('customer_name').all()
             # Fetch modified by and created by login details objects
             # Fetch modified by and created by login details objects
             modified_by_details = None
