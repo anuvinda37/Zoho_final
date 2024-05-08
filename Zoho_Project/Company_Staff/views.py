@@ -14633,32 +14633,60 @@ import csv
 from django.http import HttpResponse
 
 def downloadRetainerInvoiceSampleImportFile(request):
-    # Retrieve the invoices from the database
-    invoices = RetainerInvoice.objects.all()
+    # Retrieve the retainer invoices from the database
+    retainer_invoices = RetainerInvoice.objects.all()
 
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="retainer_invoices.csv"'
+    # Create a new Workbook
+    wb = Workbook()
 
-    # Define the CSV headers
-    fieldnames = ['Date', 'Retainer Number', 'Customer Name', 'Customer Mail Id', 'Amount', 'Status', 'Balance']
+    # Create the Retainer Invoice sheet
+    retainer_invoice_sheet = wb.active
+    retainer_invoice_sheet.title = 'Retainer Invoices'
 
-    writer = csv.DictWriter(response, fieldnames=fieldnames)
-    writer.writeheader()
+    # Define the Retainer Invoice headers
+    retainer_invoice_fieldnames = ['Date', 'Retainer Number', 'Customer Name', 'Customer Mail Id', 'Amount', 'Status', 'Balance']
+    retainer_invoice_sheet.append(retainer_invoice_fieldnames)
 
-    # Write each invoice to the CSV file
-    for invoice in invoices:
-        writer.writerow({
-            'Date': invoice.retainer_invoice_date,
-            'Retainer Number': invoice.retainer_invoice_number,
-            'Customer Name': invoice.customer_name.customer_display_name,
-            'Customer Mail Id': invoice.customer_mailid,
-            'Amount': invoice.total_amount,
-            'Status': 'Sent' if invoice.is_sent else 'Draft',
-            'Balance': invoice.balance,
-        })
+    # Write each retainer invoice to the Retainer Invoice sheet
+    for invoice in retainer_invoices:
+        retainer_invoice_sheet.append([
+            invoice.retainer_invoice_date,
+            invoice.retainer_invoice_number,
+            invoice.customer_name.customer_display_name,
+            invoice.customer_mailid,
+            invoice.total_amount,
+            'Sent' if invoice.is_sent else 'Draft',
+            invoice.balance,
+        ])
+
+    # Create the Items sheet
+    items_sheet = wb.create_sheet(title='Items')
+
+    # Define the Items headers
+    items_fieldnames = ['Retainer Invoice Number', 'Items', 'Description', 'Rate', 'Quantity', 'Amount']
+    items_sheet.append(items_fieldnames)
+
+    # Retrieve and write each item associated with the retainer invoices
+    for invoice in retainer_invoices:
+        items = Retaineritems.objects.filter(retainer=invoice)
+        for item in items:
+            items_sheet.append([
+                invoice.retainer_invoice_number,
+                item.itemname,
+                item.description,
+                item.rate,
+                item.quantity,
+                item.amount
+            ])
+
+    # Create a response with the Excel file
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=retainer_invoice_sample_file.xlsx'
+
+    # Save the workbook to the response
+    wb.save(response)
 
     return response
-
 def importRetainerInvoiceFromExcel(request):
     if 'login_id' in request.session:
         log_id = request.session['login_id']
@@ -14682,7 +14710,7 @@ def importRetainerInvoiceFromExcel(request):
             except:
                 print('sheet not found')
                 messages.error(request, '`retainer_invoice` sheet not found.! Please check.')
-                return redirect(recurringInvoice)
+                return redirect(recurrgInvoice)
 
             ws = wb["retainer_invoice"]
             ret_inv_columns = ['DATE', 'RETAINER NUMBER', 'CUSTOMER NAME', 'CUSTOMER MAIL ID', 'AMOUNT', 'STATUS', 'BALANCE']

@@ -842,6 +842,7 @@ class RetainerInvoice(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
     modified_by = models.ForeignKey(LoginDetails, on_delete=models.SET_NULL, related_name='retainer_modified', null=True, blank=True)
     modified_at = models.DateTimeField(auto_now=True)
+    document = models.FileField(upload_to='documents/', null=True, blank=True)
     def getNumFieldName(self):
         return 'retainer_invoice_number'
     

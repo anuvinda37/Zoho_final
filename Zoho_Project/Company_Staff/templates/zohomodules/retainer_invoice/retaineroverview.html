@@ -26,6 +26,21 @@
 
                                                 
                                                 <style>
+.company-info {
+    text-align: center; /* Center align the text */
+    margin-left: auto; /* Center the element horizontally */
+    margin-right: auto; /* Center the element horizontally */
+}
+
+.company-info h2 {
+    margin: 0;
+    font-size: 2em;
+}
+
+.company-info p {
+    margin: 0;
+    line-height: 1.5;
+}
 
 
  .dropdown-item:hover {
@@ -526,15 +541,16 @@
               <a class="btn btn-outline-warning small_btn mt-2 ms-1 btn-sm" id="attach_btn" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="fas fa-paperclip" ></i> 
             </a>
-            <div class="dropdown-menu" aria-labelledby="attach_btn">
-              {% if invoice.document != "" %}
-              <a class="dropdown-item text-black" data-toggle="modal" data-target="#retainer_files">Add Document</a>
-              {% endif %}
-              
-            
-          </div>
+          
                       
-                
+            <div class="dropdown-menu" aria-labelledby="attach_btn">
+              <a class="dropdown-item text-black" data-toggle="modal" data-target="#retainer_files">Add Document</a>
+              {% if invoice.document and invoice.document.url %} 
+                  <a class="dropdown-item text-black" download href="{{ invoice.document.url }}">Download Document</a>
+              {% endif %}
+          </div>
+          
+           
               <a class="btn btn-outline-warning btn-sm" style="margin-left: 4px; margin-top: 5px;" id="comment_btn"  href="#commentsModal" data-toggle="modal"   title="COMMENTS">
                 <i class="far fa-comment" style="padding-top: 3px; padding-bottom: 3px; "></i>
               </a>
@@ -845,25 +861,28 @@
       <div class="my-3 page"  style="background-color: white; width:700px; "
           id="selected-area">
           <div class="p-5">
-              <div style="background-color: #ffae1f;border-radius: 1rem;padding: 20px;">
+              <div style="background-color: #ffae1f;border-radius: 1rem;padding: 20px;display:flex;align-items: center;">
   
-                <div  class="bg-white text-black "style="width:60px; text-align:center;">
+                <div  class="status-label" style="width:60px; text-align:center;">
                 {% for invoice in invoices %}
           {% if invoice.is_sent == False %}
-          <label style class="text-left d-block text-dark">Draft</label>
+          <label style="text-align: left; display: block; color: black;">Draft</label>
           {% else %}
-          <label class="text-left d-block text-dark">Saved</label>
+          <label style="text-align: left; display: block; color: black;">Saved</label>
           {% endif %}
           {% endfor %}
         </div>
-                  <center class="h3 text-white"><b>RETAINER INVOICE</b></center>
-                  <div style="margin-left: 500px;">
-                  <p class="text-right">{{invoice.retainer_invoice_number }}</p>
-                </div>
+        <div style="flex-grow: 1; text-align: center;">
+          <h1 class="text-white" style="margin: 0;">RETAINER INVOICE</h1>
+        </div>
+        <div style="flex-grow: 1; text-align: right;">
+          <h4 class="text-white" style="margin: 0;">{{ invoice.retainer_invoice_number }}</h4>
+        </div>
               </div>
              
               <div class="row mt-5">
                   <div class="col-md-8">
+                    <h5>FROM,</h5>
                       <h4 class="text-dark" style="font-weight: bold;">
                         {{ details.company.company_name }}</h4>
                       <p class="address" style="font-weight: bold;color: #000;">
@@ -901,9 +920,9 @@
                   <div class="col-12">
                       <div class="row bb pb-2 mt-3">
                           <div class="col-4 pl-0">
-                              <label class="text-white  w-100 p-1" style="background-color: rgb(240, 190, 26);"><b>BILL
+                              <label class="text-white  w-100 p-1" style="background-color: #ffae1f;"><b>BILL
                                       TO</b></label>
-                              <h5 class="" style="font-weight: bold; color: #8b3131;">
+                              <h5 class="" style="font-weight: bold; color: #080808;">
                                 {{ customer_name }}</h5>
                               <p class="address" style="font-weight: bold;color: #000;">
                                 {{ customer_email }}
@@ -916,9 +935,9 @@
                           </div>
                           <div class="col-4"></div>
                           <div class="col-4 pr-0">
-                              <label class="text-white  w-100 p-1" style="background-color: rgb(240, 190, 26);"><b>GST
+                              <label class="text-white  w-100 p-1" style="background-color: #ffae1f;"><b>GST
                                       Details</b></label>
-                              <h5 class="" style="font-weight: bold; color: #8b3131;">
+                              <h5 class="" style="font-weight: bold; color: #0e0d0d;">
                                   {{gst_treatment}}</h5>
                               <p class="address" style="font-weight: bold;color: #000;">
                                   {{ gst_number}}
@@ -930,14 +949,14 @@
               </section>
 
               <section class="product-area mt-2">
-                  <table class="table table-hover table-bordered" style="background-color: rgb(240, 190, 26);">
-                      <thead>
+                  <table class="table table-hover table-bordered" style="border-color: black;" >
+                      <thead style="background-color: #ffae1f">
                           <tr class="">
-                              <th class="text-center" style="color:#8b3131;">Items</th>
-                              <th class="text-center" style="color:#8b3131;">Description</th>
-                              <th class="text-center" style="color:#8b3131;">Rate</th>
-                              <th class="text-center" style="color:#8b3131;">Quantity</th>
-                              <th class="text-center" style="color:#8b3131;">Amount</th>
+                              <th class="text-center" style="color:#050505;">Items</th>
+                              <th class="text-center" style="color:#050505;">Description</th>
+                              <th class="text-center" style="color:#050505;">Rate</th>
+                              <th class="text-center" style="color:#050505;">Quantity</th>
+                              <th class="text-center" style="color:#050505;">Amount</th>
                           </tr>
                       </thead>
                       <tbody>
@@ -1038,76 +1057,101 @@
       </div>
   </div>
 
-  <div class="mt-3" id="template2"
+  <div class="mt-3 " id="template2"
       style="display: none;height:800px;width:700px; margin-left: -1vh">
 
-      <section id="selected-area2" style="background-color: white;" class=" p-2 m-2">
-          <header style="	background-color: rgb(240, 190, 26);border-radius: 1rem;">
-              <div class="logo">
-                  <img class="ml-2" width="100rem" style="border-radius: 50%;"
-                      src="{% static 'images/zlogo.png' %}" alt="Company Logo">
+      <section  id="selected-area2" style="background-color: white; height: 900px;" class=" p-2 m-2">
+          <header style="	border-radius: 1rem;">
+             <br><br>
+              <div style="border-radius: 1rem;padding: 20px;display:flex;align-items: center;">
+  
+                <div  class="status-label bg-warning" style="width:60px; text-align:center;">
+                {% for invoice in invoices %}
+          {% if invoice.is_sent == False %}
+          <label style="text-align: left; display: block; color: black;">Draft</label>
+          {% else %}
+          <label style="text-align: left; display: block; color: black;">Saved</label>
+          {% endif %}
+          {% endfor %}
+        </div>
+        <div style="flex-grow: 1; text-align: center; margin-left:18px; ">
+          <h4 class="text-dark fw-bold" style="font-weight: bold  !important;" >RETAINER INVOICE</h4>
+        </div>
+        <div style="flex-grow: 1; text-align: right;">
+          <h4 class="text-dark" style="margin: 0;">{{ invoice.retainer_invoice_number }}</h4>
+        </div>
               </div>
-              <div  style="background: rgb(240, 190, 26);color: white;" class="company-info">
-                  <h2 class="text-white">{{details.company.company_name}}</h2>
-                  <p class="text-white"> {{details.company.address}}<br>{{details.company.city}}</p>
-                  <p> {{details.company.contact}}</p>
-                  <p>{{details.login_details.email}}</p>
-              </div>
+            
+              <hr>
           </header>
           <div class="invoice-box">
-              <h1 class="text-dark">Retainer Invoice</h1>
+            <div class="row">
+              <div class="col">
+            
+            <div class="company-details"  style="color:black;">
+              <p class="bg-warning" style="border-top-right-radius: 4vh; border-bottom-right-radius: 4vh; width: fit-content; padding: 5px 60px 5px 10px;"><b class="text-black">COMPANY ADDRESS</b>,</p>
+              <h2 class="text-dark">{{details.company.company_name}}</h2>
+              <p class="text-dark"> {{details.company.address}}<br>{{details.company.city}}</p>
+              <p> {{details.company.contact}}</p>
+              <p>{{details.login_details.email}}</p>
+          </div>
+              </div>
+              <div class="col">
+          <div class="client-details" style="width: 50vh;">
+            <p class="bg-warning" style="border-top-right-radius: 4vh; border-bottom-right-radius: 4vh; width: fit-content; padding: 5px 60px 5px 10px;"><b class="text-black">BILLING ADDRESS</b>,</p>
+              <table>
+                  <tr>
+                      <td class="table-cell text-black" style="border: none;">
+                          <b>{{ customer_name }}</b>
+                      </td>
+                  </tr>
+                
+                  <tr>
+                      <td class="table-cell text-black" style="border: none;">
+                        {{ billing_address }} </td>
+                  </tr>
+                
+                  <tr>
+                      <td class="table-cell text-black" style="border: none;">
+                          {{gst_treatment}}</td>
+                  </tr>
+                  
+                  <tr>
+                      <td class="table-cell text-black" style="border: none;">
+                          {{gst_number}}</td>
+                  </tr>
+                  
+              </table>
+          </div>
+          </div>
+          </div>
+          <hr>
               <div class="invoice-header">
                   <div class="invoice-details text-dark">
                       <table>
                           <tr>
-                              <td class="table-cell text-black" style="border: none;">Retainer
-                                  No#
-                              </td>
-                              <td class="table-cell text-black" style="border: none;">:</td>
-                              <td class="table-cell text-black" style="border: none;">
-                                  {{invoice.retainer_invoice_number}}</td>
+                             
+                              
+                              
                           </tr>
                           <tr>
-                              <td class="table-cell text-black" style="border: none;">Retainer
+                              <td  class="table-cell text-black" style="border: none; font-weight: bold  !important;" ><h4>Retainer
                                   Invoice
                                   Date
-                              </td>
+                                </h4></td>
                               <td class="table-cell text-black" style="border: none;">:</td>
                               <td class="table-cell text-black" style="border: none;">
-                                  {{invoice.retainer_invoice_date|date:'d-m-Y'}}</td>
+                                 <h4> {{invoice.retainer_invoice_date|date:'d-m-Y'}} </h4></td>
                           </tr>
 
                       </table>
                   </div>
-                  <div class="client-details" style="width: 50vh;">
-                      <table>
-                          <tr>
-                              <td class="table-cell text-black" style="border: none;">
-                                  <b>{{ customer_name }}</b>
-                              </td>
-                          </tr>
-                        
-                          <tr>
-                              <td class="table-cell text-black" style="border: none;">
-                                {{ billing_address }} </td>
-                          </tr>
-                        
-                          <tr>
-                              <td class="table-cell text-black" style="border: none;">
-                                  {{gst_treatment}}</td>
-                          </tr>
-                          
-                          <tr>
-                              <td class="table-cell text-black" style="border: none;">
-                                  {{gst_number}}</td>
-                          </tr>
-                          
-                      </table>
-                  </div>
+                  
               </div>
-
-              <table>
-                  <thead style="background-color: rgb(240, 190, 26);">
+              <br>
+<hr>
+              <table class="table table-hover table-bordered" style="border-color: black;">
+                  <thead style="background-color: #ffae1f;">
                       <tr>
 
                           <th id="th" style="text-align: center;">Product</th>
@@ -1135,7 +1179,7 @@
                   <div class="row">
                       <div class="col-5"></div>
                       <div class="col-4">
-                          <table style="margin-left: 10vh;">
+                          <table style="margin-left: 20vh;">
                               <tr>
                                   <td class="table-cell text-black" style="border: none;">
                                       Subtotal
@@ -1177,7 +1221,7 @@
               </div>
 
           </div>
-
+<br><br>
           <footer class="mb-5">
               <p class="text-dark">&copy; Zho Books 2023 | Info park kakkanad kochi,
                   Ernamkulam,
@@ -1189,8 +1233,8 @@
           </div>
       </section>
       <div id="templateToggle" class="templateToggleSegment mt-3 mb-0 w-100 d-flex justify-content-center">
-        <button id="toggleTemplate1" onclick="template_function()" class="btn btn-outline-warning btn-sm m-2 active templateToggleButtons">1</button>
-        <button id="toggleTemplate2" onclick="show_template2()" class="btn btn-outline-warning btn-sm m-2 templateToggleButtons">2</button>
+        <button id="toggleTemplate1" onclick="template_function()" class="btn btn-outline-warning btn-sm m-2  templateToggleButtons">1</button>
+        <button id="toggleTemplate2" onclick="show_template2()" class="btn btn-outline-warning btn-sm m-2 active  templateToggleButtons">2</button>
         <button id="toggleTemplate3" onclick="show_template3()" class="btn btn-outline-warning btn-sm m-2 templateToggleButtons">3</button>
       </div>
   </div>
@@ -1198,20 +1242,19 @@
   <div id="template3" class="template3" style="display: none;">
       <div class="my-5 page"  style="background-color: white; width: 700px;">
           <div class="p-5" id="selected-area3">
-              <section class="top-content bb d-flex justify-content-between"
-                  style="background-color: rgb(240, 190, 26);">
+              <section class="top-content "
+                  style="background-image: linear-gradient(#ffae1f, black); color: white;">
                   <div class="logo">
                       <!-- <img src="logo.png" alt="" class="img-fluid"> -->
                   </div>
-                  <div class="top-left">
-                      <div class="graphic-path">
-                          <p>Retainer Invoice</p>
-                      </div>
-                      <div class="position-relative" style="margin-right: 5px;">
-                          <p>Retainer Invoice No.
-                              <span>{{invoice.retainer_invoice_number}}</span>
-                          </p>
-                      </div>
+                  <div style="margin-right:8px !important;" class="top-left">
+                    <p style="font-size: 4vh; text-align: center;">RETAINER INVOICE</p>
+                      <div  style="color: white; text-align: center;" >
+                        <p class="text-white" >{{details.company.company_name}}</p>
+                        <p class="text-white"> {{details.company.address}}<br>{{details.company.city}}</p>
+                        <p> {{details.company.contact}}</p>
+                        <p>{{details.login_details.email}}</p>
+                    </div>
                   </div>
               </section>
 
@@ -1252,7 +1295,7 @@
 
               <section class="product-area mt-4">
                   <table class=" table table-hover table-bordered " id="table1">
-                      <thead style="background-color: #E4A11B;">
+                      <thead style="background-color: #ffae1f;">
                           <tr>
                               <td style="text-align: center; font-weight:bold; color:black ">Items
                               </td>
@@ -1360,9 +1403,9 @@
           </div>
       </div>
       <div id="templateToggle" class="templateToggleSegment mt-3 mb-0 w-100 d-flex justify-content-center">
-        <button id="toggleTemplate1" onclick="template_function()" class="btn btn-outline-warning btn-sm m-2 active templateToggleButtons">1</button>
+        <button id="toggleTemplate1" onclick="template_function()" class="btn btn-outline-warning btn-sm m-2 templateToggleButtons">1</button>
         <button id="toggleTemplate2" onclick="show_template2()" class="btn btn-outline-warning btn-sm m-2 templateToggleButtons">2</button>
-        <button id="toggleTemplate3" onclick="show_template3()" class="btn btn-outline-warning btn-sm m-2 templateToggleButtons">3</button>
+        <button id="toggleTemplate3" onclick="show_template3()" class="btn btn-outline-warning btn-sm m-2 active  templateToggleButtons">3</button>
       </div>
   </div>
 
@@ -2630,6 +2673,28 @@ function sortTable() {
             }
         }
     }
+
+
+    $(document).ready(function () {
+    $("#fileSave").click(function () {
+      var formData = new FormData();
+      formData.append('id', $("#file_id").val());
+      formData.append('file', $("#filess")[0].files[0]); 
+      formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+      $.ajax({
+        type: 'POST',
+        url: "",
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function (response) {
+          document.getElementById("modalAddfile").reset();
+          location.reload();
+        },
+      });
+    });
+  });
 </script>
 
 {% endblock %}
