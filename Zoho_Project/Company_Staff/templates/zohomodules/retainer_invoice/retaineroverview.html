@@ -394,7 +394,15 @@
                                }
                              }
                </script>
-                 <div class="col-md-3" style="padding-left: 10px;">
+                
+               <div class="col-md-3" style="padding-left: 254PX;margin-top:-42px;">
+                   <a class="btn btn btn-outline-warning  btn-sm text-right mt-2" style="height: 35px; padding-top: 10px; padding-left:10px; padding-right:10px;"  style="font-size: small;" href="{% url 'new_retainer'%}">
+                       <i class="fa fa-plus"></i>
+                   </a>
+               </div>
+               
+               <div class="col-md-6">
+                <div class="col-md-3" style="padding-left: 10px;">
                   <div class="col-md-2 mt-2 mx-1" style="margin-left:3px;">
                       <a class="btn text-center btn-outline-warning btn-sm" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" style=" height:34px;width:30px;">
                           <i class="fa fa-filter" style="padding-top:2px; padding-bottom:1px; "></i>
@@ -407,13 +415,7 @@
                       </div>
                   </div>
               </div>
-               <div class="col-md-3" style="padding-left: 254PX;margin-top:-42px;">
-                   <a class="btn btn btn-outline-warning  btn-sm text-right mt-2" style="height: 35px; padding-top: 10px; padding-left:10px; padding-right:10px;"  style="font-size: small;" href="{% url 'new_retainer'%}">
-                       <i class="fa fa-plus"></i>
-                   </a>
                </div>
-               
-               <div class="col-md-6"></div>
                
    
                </div>
@@ -591,9 +593,9 @@
                     <button class="btn btn-outline-warning print-button" style="font-size: 10px;margin-left: 4px; margin-top: 5px;" data-toggle="tooltip" title="Print"
                         id="print-button">
                         <i class="fa fa-print"></i></button>
-      <a class="btn btn-outline-warning btn-sm" style="margin-left: 4px; margin-top: 5px;" href="" data-toggle="modal" data-target="#commentModal" data-toggle="tooltip" title="comment">
-        <i class="far fa-comment" style="padding-top: 3px; padding-bottom: 3px; "></i>
-      </a>
+                        <a class="btn btn-outline-warning btn-sm" style="margin-left: 4px; margin-top: 5px;" id="comment_btn"  href="#commentsModal" data-toggle="modal"   title="COMMENTS">
+                          <i class="far fa-comment" style="padding-top: 3px; padding-bottom: 3px; "></i>
+                        </a>
       <a class="btn btn-outline-warning btn-sm" style="margin-left: 4px; margin-top: 5px;" id="history_btn"  href="#historyModal" data-toggle="modal"   title="HISTORY">
         <i class="fa-solid fa-clock-rotate-left"></i>
       </a>
@@ -608,7 +610,7 @@
     <div class="col-sm-1 " style="margin-left:540px; margin-top:-40px;">
       <div class="col-md-6 d-flex justify-content-between align-items-center">
     <!-- Slip buttons -->
-    <a class="btn btn-outline-warning btn-sm" style="margin-left: 4px; margin-top: 5px;" href="" data-toggle="modal" data-target="#commentModal" data-toggle="tooltip" title="comment">
+    <a class="btn btn-outline-warning btn-sm" style="margin-left: 4px; margin-top: 5px;" id="comment_btn"  href="#commentsModal" data-toggle="modal"   title="COMMENTS">
       <i class="far fa-comment" style="padding-top: 3px; padding-bottom: 3px; "></i>
     </a>
     <a class="btn btn-outline-warning btn-sm" style="margin-left: 4px; margin-top: 5px;" id="history_btn"  href="#historyModal" data-toggle="modal"   title="HISTORY">
@@ -864,13 +866,13 @@
               <div style="background-color: #ffae1f;border-radius: 1rem;padding: 20px;display:flex;align-items: center;">
   
                 <div  class="status-label" style="width:60px; text-align:center;">
-                {% for invoice in invoices %}
+               
           {% if invoice.is_sent == False %}
           <label style="text-align: left; display: block; color: black;">Draft</label>
           {% else %}
           <label style="text-align: left; display: block; color: black;">Saved</label>
           {% endif %}
-          {% endfor %}
+          
         </div>
         <div style="flex-grow: 1; text-align: center;">
           <h1 class="text-white" style="margin: 0;">RETAINER INVOICE</h1>
@@ -1066,13 +1068,13 @@
               <div style="border-radius: 1rem;padding: 20px;display:flex;align-items: center;">
   
                 <div  class="status-label bg-warning" style="width:60px; text-align:center;">
-                {% for invoice in invoices %}
+               
           {% if invoice.is_sent == False %}
           <label style="text-align: left; display: block; color: black;">Draft</label>
           {% else %}
           <label style="text-align: left; display: block; color: black;">Saved</label>
           {% endif %}
-          {% endfor %}
+        
         </div>
         <div style="flex-grow: 1; text-align: center; margin-left:18px; ">
           <h4 class="text-dark fw-bold" style="font-weight: bold  !important;" >RETAINER INVOICE</h4>

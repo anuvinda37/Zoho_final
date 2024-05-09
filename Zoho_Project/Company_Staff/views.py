@@ -13476,7 +13476,7 @@ def create_invoice_draft(request):
             company=staff_details.company
             dash_details = CompanyDetails.objects.get(id=staff_details.company.id)
         else:    
-            company=CompanyDetails.object.get(login_details=log_details)
+            company=CompanyDetails.objects.get(login_details=log_details)
             dash_details = company
         if request.method == 'POST':
             # Extract data from the request
@@ -13867,6 +13867,16 @@ def retainer_edit_page(request, retainer_id):
         retainer = get_object_or_404(RetainerInvoice, pk=retainer_id)
         retainer_items = Retaineritems.objects.filter(retainer=retainer)
         
+
+
+        if log_details.user_type == 'Staff':
+            customers = Customer.objects.filter(company=dash_details.company)
+        elif log_details.user_type == 'Company':
+            customers = Customer.objects.filter(company=dash_details)
+        
+        # Assuming you need to pass 'allmodules' and 'items' to the template
+        allmodules = ZohoModules.objects.get(company=dash_details.company, status='New')
+        items = Items.objects.filter(company=dash_details.company)
         if request.method == 'POST':
             # Extract data from the request
             customer_id = request.POST.get('customer_id')
@@ -13953,7 +13963,7 @@ def retainer_edit_page(request, retainer_id):
             banks = Banking.objects.filter(company=dash_details.company).values_list('bnk_name', flat=True)
             payment_details = retainer_payment_details.objects.filter(retainer=retainer).first()
             customers = Customer.objects.all()
-            items = Items.objects.filter(company=dash_details.company)
+            item = Items.objects.filter(company=dash_details.company)
 
             context = {
                 'retainer': retainer,
@@ -13975,6 +13985,9 @@ def retainer_edit_page(request, retainer_id):
                 'retainer_items': retainer_items,
                 'customer1': customers,
                 'items': items,
+                'customers': customers,  # Pass filtered customers to the context
+                'allmodules': allmodules,  # Pass 'allmodules' to the context
+                'item': item,  # Pass 'items' to the context
             }
 
             return render(request, 'zohomodules/retainer_invoice/retainer_invoice_edit.html', context)
@@ -14633,60 +14646,73 @@ import csv
 from django.http import HttpResponse
 
 def downloadRetainerInvoiceSampleImportFile(request):
-    # Retrieve the retainer invoices from the database
-    retainer_invoices = RetainerInvoice.objects.all()
+    if 'login_id' in request.session:
+        login_id = request.session['login_id']
+        if 'login_id' not in request.session:
+            return redirect('/')
+        log_details = LoginDetails.objects.get(id=login_id)
+        if log_details.user_type == 'Staff':
+            dash_details = StaffDetails.objects.get(login_details=log_details)
+            invoices = RetainerInvoice.objects.filter(logindetails=log_details).order_by('-id')
+        elif log_details.user_type == 'Company':
+            dash_details = CompanyDetails.objects.get(login_details=log_details)
+            invoices = RetainerInvoice.objects.filter(company=dash_details).order_by('-id')
+        else:
+            return redirect('/')
+        
+        # Create a new Workbook
+        wb = Workbook()
 
-    # Create a new Workbook
-    wb = Workbook()
+        # Create the Retainer Invoice sheet
+        retainer_invoice_sheet = wb.active
+        retainer_invoice_sheet.title = 'Retainer Invoices'
 
-    # Create the Retainer Invoice sheet
-    retainer_invoice_sheet = wb.active
-    retainer_invoice_sheet.title = 'Retainer Invoices'
+        # Define the Retainer Invoice headers
+        retainer_invoice_fieldnames = ['Date', 'Retainer Number', 'Customer Name', 'Customer Mail Id', 'Amount', 'Status', 'Balance']
+        retainer_invoice_sheet.append(retainer_invoice_fieldnames)
 
-    # Define the Retainer Invoice headers
-    retainer_invoice_fieldnames = ['Date', 'Retainer Number', 'Customer Name', 'Customer Mail Id', 'Amount', 'Status', 'Balance']
-    retainer_invoice_sheet.append(retainer_invoice_fieldnames)
-
-    # Write each retainer invoice to the Retainer Invoice sheet
-    for invoice in retainer_invoices:
-        retainer_invoice_sheet.append([
-            invoice.retainer_invoice_date,
-            invoice.retainer_invoice_number,
-            invoice.customer_name.customer_display_name,
-            invoice.customer_mailid,
-            invoice.total_amount,
-            'Sent' if invoice.is_sent else 'Draft',
-            invoice.balance,
-        ])
-
-    # Create the Items sheet
-    items_sheet = wb.create_sheet(title='Items')
-
-    # Define the Items headers
-    items_fieldnames = ['Retainer Invoice Number', 'Items', 'Description', 'Rate', 'Quantity', 'Amount']
-    items_sheet.append(items_fieldnames)
-
-    # Retrieve and write each item associated with the retainer invoices
-    for invoice in retainer_invoices:
-        items = Retaineritems.objects.filter(retainer=invoice)
-        for item in items:
-            items_sheet.append([
+        # Write each retainer invoice to the Retainer Invoice sheet
+        for invoice in invoices:
+            retainer_invoice_sheet.append([
+                invoice.retainer_invoice_date,
                 invoice.retainer_invoice_number,
-                item.itemname,
-                item.description,
-                item.rate,
-                item.quantity,
-                item.amount
+                invoice.customer_name.customer_display_name,
+                invoice.customer_mailid,
+                invoice.total_amount,
+                'Sent' if invoice.is_sent else 'Draft',
+                invoice.balance,
             ])
 
-    # Create a response with the Excel file
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename=retainer_invoice_sample_file.xlsx'
+        # Create the Items sheet
+        items_sheet = wb.create_sheet(title='Items')
 
-    # Save the workbook to the response
-    wb.save(response)
+        # Define the Items headers
+        items_fieldnames = ['Retainer Invoice Number', 'Items', 'Description', 'Rate', 'Quantity', 'Amount']
+        items_sheet.append(items_fieldnames)
 
-    return response
+        # Retrieve and write each item associated with the retainer invoices
+        for invoice in invoices:
+            items = Retaineritems.objects.filter(retainer=invoice)
+            for item in items:
+                items_sheet.append([
+                    invoice.retainer_invoice_number,
+                    item.itemname,
+                    item.description,
+                    item.rate,
+                    item.quantity,
+                    item.amount
+                ])
+
+        # Create a response with the Excel file
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename=retainer_invoice_sample_file.xlsx'
+
+        # Save the workbook to the response
+        wb.save(response)
+
+        return response
+    else:
+        return redirect('/')
 def importRetainerInvoiceFromExcel(request):
     if 'login_id' in request.session:
         log_id = request.session['login_id']
@@ -14703,31 +14729,103 @@ def importRetainerInvoiceFromExcel(request):
             excel_file = request.FILES['excel_file']
 
             wb = load_workbook(excel_file)
+            print(wb.sheetnames)
+            print(type(excel_file))  # Check the type of the uploaded file
 
-            # checking retainer_invoice sheet columns
+            # Checking retainer invoice sheet columns
             try:
                 ws = wb["retainer_invoice"]
+                
             except:
                 print('sheet not found')
                 messages.error(request, '`retainer_invoice` sheet not found.! Please check.')
-                return redirect(recurrgInvoice)
+                return redirect(new_retainer)
 
-            ws = wb["retainer_invoice"]
             ret_inv_columns = ['DATE', 'RETAINER NUMBER', 'CUSTOMER NAME', 'CUSTOMER MAIL ID', 'AMOUNT', 'STATUS', 'BALANCE']
             ret_inv_sheet = [cell.value for cell in ws[1]]
             if ret_inv_sheet != ret_inv_columns:
                 print('invalid sheet')
                 messages.error(request, '`retainer_invoice` sheet column names or order is not in the required format.! Please check.')
-                return redirect(recurringInvoice)
+                return redirect(retainer_list)
 
             for row in ws.iter_rows(min_row=2, values_only=True):
                 date, retainer_number, customer_name, customer_mail_id, amount, status, balance = row
-                # Perform your import logic here
+                if any(cell is None for cell in [date, retainer_number, customer_name, amount, balance]):
+                    print('retainerInvoice == invalid data')
+                    messages.error(request, '`retainer_invoice` sheet entries missing required fields.! Please check.')
+                    return redirect(new_retainer)
 
-            # Additional import logic goes here
+            # Getting data from retainer_invoice sheet and creating retainer invoices
+            incorrect_data = []
 
-            messages.success(request, 'Data imported successfully.!')
-            return redirect(retainer_list)
+            for row in ws.iter_rows(min_row=2, values_only=True):
+                date, retainer_number, customer_name, customer_mail_id, amount, status, balance = row
+                
+                try:
+                    customer = Customer.objects.get(company=com, customer_display_name=customer_name)
+                    email = customer.customer_email
+                    # Assuming other customer details are retrieved similarly
+                except Customer.DoesNotExist:
+                    print(f'Customer {customer_name} not found')
+                    incorrect_data.append(retainer_number)
+                    continue
+                except Exception as e:
+                    print(f'Error retrieving customer details: {e}')
+                    incorrect_data.append(retainer_number)
+                    continue
+
+                retInv = RetainerInvoice(
+                    company=com,
+                    customer_name=customer,
+                    customer_mailid=email,
+                    retainer_invoice_number=retainer_number,
+                    retainer_invoice_date=date,
+                    total_amount=amount,
+                    balance=balance,
+                    status=status,
+                    created_at=timezone.now(),
+                    modified_at=timezone.now(),
+                    created_by=log_details,
+                    modified_by=log_details,
+                )
+                retInv.save()
+
+                # Save retainer items if any
+                ws_items = wb["items"]
+                items_columns = ['RETAINER INVOICE NUMBER', 'ITEMS', 'DESCRIPTION', 'RATE', 'QUANTITY', 'AMOUNT']
+                items_sheet = [cell.value for cell in ws_items[1]]
+                if items_sheet != items_columns:
+                    print('invalid items sheet')
+                    messages.error(request, '`items` sheet column names or order is not in the required format.! Please check.')
+                    return redirect(new_retainer)
+
+                for item_row in ws_items.iter_rows(min_row=2, values_only=True):
+                    retainer_invoice_number, item_name, description, rate, quantity, amount = item_row
+                    try:
+                        item = Items.objects.get(item_name=item_name, company=com)
+                    except Items.DoesNotExist:
+                        print(f'Item {item_name} not found')
+                        incorrect_data.append(retainer_invoice_number)
+                        continue
+
+                    Retaineritems.objects.create(
+                        company=com,
+                        logindetails=log_details,
+                        retainer=retInv,
+                        description=description,
+                        amount=amount,
+                        itemname=item_name,
+                        quantity=quantity,
+                        rate=rate,
+                        item=item
+                    )
+
+            if not incorrect_data:
+                messages.success(request, 'Data imported successfully.!')
+                return redirect(retainer_list)
+            else:
+                messages.warning(request, f'Data with following Retainer Numbers could not import due to incorrect data provided -> {", ".join(str(item) for item in incorrect_data)}')
+                return redirect(retainer_list)
         else:
             return redirect(retainer_list)
     else:

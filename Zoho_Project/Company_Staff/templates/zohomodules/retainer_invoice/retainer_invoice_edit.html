@@ -242,7 +242,7 @@ li{
                           <div class="col-md-6 d-flex">
                             <select class="form-control" id="customer_name" name="customer_name" onchange="getCustomerDetails(this.value)">
                               <option value="{{ customer_name }}" selected>{{ customer_name }}</option>
-                              {% for customer in customer1 %}
+                              {% for customer in customers %}
                                   <option class="text-light bg-black" value="{{ customer.id }}">{{ customer.customer_display_name }}</option>
                               {% endfor %}
                           </select>

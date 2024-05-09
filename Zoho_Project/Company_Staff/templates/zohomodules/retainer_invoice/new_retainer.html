@@ -2720,13 +2720,14 @@ li{
             </td>
         </tr>`;
     
-    $(newRow).insertAfter("#tbody-table tr:first");
+        $(newRow).insertBefore(".blank-row");
 
     $('#item' + itemCounter).selectize({
         sortField: 'value',
         });
         reloadItemss();
         updateIndexNumbers();
+        addEventListenersToInputs();
 });
 
             // Call the function to update index numbers initially
@@ -2741,7 +2742,7 @@ li{
              
 
 
-  // Add event listeners to the quantity and rate inputs
+              function addEventListenersToInputs() {
   var quantityInputs = document.querySelectorAll('[id^="qty"]');
   var rateInputs = document.querySelectorAll('[id^="rate"]');
 
@@ -2749,7 +2750,8 @@ li{
     quantityInputs[i].addEventListener('input', handleInput);
     rateInputs[i].addEventListener('input', handleInput);
   }
-
+}
+addEventListenersToInputs();
   function handleInput(event) {
     var rowId = event.target.id.slice(-1);
     calculateAmount(rowId);
