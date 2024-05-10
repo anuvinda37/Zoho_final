@@ -14713,123 +14713,148 @@ def downloadRetainerInvoiceSampleImportFile(request):
         return response
     else:
         return redirect('/')
+import sys
+
 def importRetainerInvoiceFromExcel(request):
+    com = None 
     if 'login_id' in request.session:
-        log_id = request.session['login_id']
-        log_details = LoginDetails.objects.get(id=log_id)
-        if log_details.user_type == 'Company':
-            com = CompanyDetails.objects.get(login_details=log_details)
+        login_id = request.session['login_id']
+        if 'login_id' not in request.session:
+            return redirect('/')
+        log_details = LoginDetails.objects.get(id=login_id)
+        if log_details.user_type == 'Staff':
+            dash_details = StaffDetails.objects.get(login_details=log_details)
+            invoices = RetainerInvoice.objects.filter(logindetails=log_details).order_by('-id')
+        elif log_details.user_type == 'Company':
+            dash_details = CompanyDetails.objects.get(login_details=log_details)
+            invoices = RetainerInvoice.objects.filter(company=dash_details).order_by('-id')
+            com = dash_details.company
         else:
-            com = StaffDetails.objects.get(login_details=log_details).company
+            return redirect('/')
 
         current_datetime = timezone.now()
-        dateToday = current_datetime.date()
+        date_today = current_datetime.date()
 
         if request.method == "POST" and 'excel_file' in request.FILES:
             excel_file = request.FILES['excel_file']
 
             wb = load_workbook(excel_file)
-            print(wb.sheetnames)
-            print(type(excel_file))  # Check the type of the uploaded file
 
-            # Checking retainer invoice sheet columns
+            # checking retainer invoice sheet columns
             try:
                 ws = wb["retainer_invoice"]
-                
             except:
-                print('sheet not found')
+                print('Sheet not found:', sys.exc_info()[0])
                 messages.error(request, '`retainer_invoice` sheet not found.! Please check.')
-                return redirect(new_retainer)
+                return redirect(retainer_list)
 
-            ret_inv_columns = ['DATE', 'RETAINER NUMBER', 'CUSTOMER NAME', 'CUSTOMER MAIL ID', 'AMOUNT', 'STATUS', 'BALANCE']
+            ret_inv_columns = ['CUSTOMER NAME', 'MAIL ID', 'PLACE OF SUPPLY', 'RETAINER INVOICE NUMBER', 'REFERENCES', 'RETAINER INVOICE DATE', 'ADVANCE', 'TOTAL AMOUNT', 'CUSTOMER NOTES', 'TERMS AND CONDITIONS', 'BALANCE', 'PAID', 'PAY METHOD', 'ACC NO', 'CHEQUE NO', 'UPI ID']
             ret_inv_sheet = [cell.value for cell in ws[1]]
+            print('Retainer invoice sheet columns:', ret_inv_sheet)  # Debug print
             if ret_inv_sheet != ret_inv_columns:
-                print('invalid sheet')
+                print('Invalid sheet format:', ret_inv_sheet)
                 messages.error(request, '`retainer_invoice` sheet column names or order is not in the required format.! Please check.')
                 return redirect(retainer_list)
 
             for row in ws.iter_rows(min_row=2, values_only=True):
-                date, retainer_number, customer_name, customer_mail_id, amount, status, balance = row
-                if any(cell is None for cell in [date, retainer_number, customer_name, amount, balance]):
-                    print('retainerInvoice == invalid data')
+                print('Row data:', row)  # Debug print
+                customer_name, customer_mailid, place_of_supply, retainer_invoice_number, references, retainer_invoice_date, advance, total_amount, customer_notes, terms_and_conditions, balance, paid, pay_method, acc_no, cheque_no, upi_id = row
+                if any(field is None for field in [customer_name, retainer_invoice_number, retainer_invoice_date, total_amount]):
+                    print('Invalid data:', row)  # Debug print
                     messages.error(request, '`retainer_invoice` sheet entries missing required fields.! Please check.')
-                    return redirect(new_retainer)
+                    return redirect(retainer_list)
 
-            # Getting data from retainer_invoice sheet and creating retainer invoices
-            incorrect_data = []
-
+            # Getting data from retainer invoice sheet and create retainer invoice
+            ws = wb['retainer_invoice']
             for row in ws.iter_rows(min_row=2, values_only=True):
-                date, retainer_number, customer_name, customer_mail_id, amount, status, balance = row
+                customer_name, customer_mailid, place_of_supply, retainer_invoice_number, references, retainer_invoice_date, advance, total_amount, customer_notes, terms_and_conditions, balance, paid, pay_method, acc_no, cheque_no, upi_id = row
                 
-                try:
-                    customer = Customer.objects.get(company=com, customer_display_name=customer_name)
-                    email = customer.customer_email
-                    # Assuming other customer details are retrieved similarly
-                except Customer.DoesNotExist:
-                    print(f'Customer {customer_name} not found')
-                    incorrect_data.append(retainer_number)
-                    continue
-                except Exception as e:
-                    print(f'Error retrieving customer details: {e}')
-                    incorrect_data.append(retainer_number)
-                    continue
+                # Retrieve the Customer instance based on the customer_mailid
+                customer_instance, created = Customer.objects.get_or_create(customer_email=customer_mailid)
 
-                retInv = RetainerInvoice(
+                # Example logic for creating a Retainer invoice instance
+                retainer_invoice = RetainerInvoice(
                     company=com,
-                    customer_name=customer,
-                    customer_mailid=email,
-                    retainer_invoice_number=retainer_number,
-                    retainer_invoice_date=date,
-                    total_amount=amount,
+                    logindetails=com.login_details if com else None,
+                    customer_name=customer_instance,
+                    customer_mailid=customer_mailid,
+                    customer_placesupply=place_of_supply,
+                    retainer_invoice_number=retainer_invoice_number,
+                    refrences=references,
+                    retainer_invoice_date=retainer_invoice_date,
+                    advance=advance,
+                    total_amount=total_amount,
+                    customer_notes=customer_notes,
+                    terms_and_conditions=terms_and_conditions,
                     balance=balance,
-                    status=status,
-                    created_at=timezone.now(),
-                    modified_at=timezone.now(),
-                    created_by=log_details,
-                    modified_by=log_details,
+                    is_draft=True,  # Set to True if necessary
+                    is_sent=False,  # Set to False if necessary
+                    created_at=current_datetime,
+                    modified_at=current_datetime
                 )
-                retInv.save()
+                retainer_invoice.save()
 
-                # Save retainer items if any
-                ws_items = wb["items"]
-                items_columns = ['RETAINER INVOICE NUMBER', 'ITEMS', 'DESCRIPTION', 'RATE', 'QUANTITY', 'AMOUNT']
-                items_sheet = [cell.value for cell in ws_items[1]]
-                if items_sheet != items_columns:
-                    print('invalid items sheet')
-                    messages.error(request, '`items` sheet column names or order is not in the required format.! Please check.')
-                    return redirect(new_retainer)
+                # Optionally, create and save related models like Retaineritems, retInvoiceReference, or retainer_payment_details
 
+                # Example logic for creating Retaineritems instances
+                try:
+                    ws_items = wb[f"retainer_items_{retainer_invoice_number}"]
+                except Exception as e:
+                    print(f'Retainer items sheet for {retainer_invoice_number} not found:', e)  # Debug print
+                    messages.warning(request, f'Retainer items sheet for {retainer_invoice_number} not found.! Skipping this retainer invoice.')
+                    continue
+
+                # Define the expected columns for retainer items
+                ret_item_columns = ['RETAINER INVOICE NUMBER','DESCRIPTION', 'AMOUNT', 'ITEM NAME', 'HSN', 'QUANTITY', 'RATE']
+                ret_item_sheet = [cell.value for cell in ws_items[1]]
+                print('Retainer items sheet columns:', ret_item_sheet)  # Debug print
+                if ret_item_sheet != ret_item_columns:
+                    print('Invalid item sheet format:', ret_item_sheet)  # Debug print
+                    messages.error(request, 'Retainer items sheet column names or order is not in the required format.! Please check.')
+                    return redirect(importRetainerInvoiceFromExcel)
                 for item_row in ws_items.iter_rows(min_row=2, values_only=True):
-                    retainer_invoice_number, item_name, description, rate, quantity, amount = item_row
-                    try:
-                        item = Items.objects.get(item_name=item_name, company=com)
-                    except Items.DoesNotExist:
-                        print(f'Item {item_name} not found')
-                        incorrect_data.append(retainer_invoice_number)
-                        continue
-
-                    Retaineritems.objects.create(
+                    retainer_invoice_number, description, amount, item_name, hsn, quantity, rate = item_row               
+                    
+                    # Example logic for creating a Retaineritems instance
+                    retainer_item = Retaineritems(
                         company=com,
-                        logindetails=log_details,
-                        retainer=retInv,
+                        logindetails=com.login_details,
+                        retainer=retainer_invoice,
                         description=description,
                         amount=amount,
                         itemname=item_name,
+                        hsn=hsn,
                         quantity=quantity,
-                        rate=rate,
-                        item=item
+                        rate=rate
                     )
+                    retainer_item.save()
 
-            if not incorrect_data:
-                messages.success(request, 'Data imported successfully.!')
-                return redirect(retainer_list)
-            else:
-                messages.warning(request, f'Data with following Retainer Numbers could not import due to incorrect data provided -> {", ".join(str(item) for item in incorrect_data)}')
-                return redirect(retainer_list)
+                # Example logic for creating retInvoiceReference instance
+                ret_invoice_ref = retInvoiceReference(
+                    retainer=retainer_invoice,
+                    reference=references
+                )
+                ret_invoice_ref.save()
+
+                # Example logic for creating retainer_payment_details instance
+                if paid:
+                    ret_payment = retainer_payment_details(
+                        user=None,  # Update this if needed
+                        retainer=retainer_invoice,
+                        payment_opt=pay_method,
+                        acc_no=acc_no,
+                        cheque_no=cheque_no,
+                        upi_id=upi_id
+                    )
+                    ret_payment.save()
+
+            messages.success(request, 'Data imported successfully.!')
+            return redirect(retainer_list)
         else:
             return redirect(retainer_list)
     else:
         return redirect('/')
+
 def get_customers(request):
     customers = Customer.objects.filter(company=company).values('id', 'customer_display_name')
     return JsonResponse(list(customers), safe=False)
