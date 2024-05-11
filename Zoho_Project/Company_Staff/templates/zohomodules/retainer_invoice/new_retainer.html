@@ -2654,11 +2654,38 @@ li{
                 <script>  document.getElementById('dateField').valueAsDate = new Date();</script>
           
                 <script>
+                    
                   function itemfunction(id_str) {
                         console.log("itemfunction called"); // Add this line for debugging
                         var id = id_str.split("item")[1];
                         var select = $(`#item${id}`).val();
                         console.log("Selected item ID: " + select);
+
+                        // Check if a selection has been made
+                        if (select) {
+                            // Check if the item is already selected in any previous row
+                            var isAlreadySelected = false;
+                            $('.item_select').each(function() {
+                                if ($(this).val() == select && $(this).attr('id') != `item${id}`) {
+                                    isAlreadySelected = true;
+                                    return false; // Exit the loop early if a match is found
+                                }
+                            });
+
+                            if (isAlreadySelected) {
+                                // Display alert or any other feedback to the user
+                                alert("This item has already been selected in a previous row. Please choose a different item.");
+                                // Reset the dropdown to its initial state
+                                $(`#item${id}`).val('');
+                                return;
+                            }
+                        }
+
+
+
+
+
+
 
                         $.ajax({
                             type: "GET",
@@ -2685,12 +2712,24 @@ li{
             var itemCounter = 1;
           
             // Function to update index numbers for item rows
+            
+
+
             function updateIndexNumbers() {
                 $(".item-row").each(function (index) {
                     $(this).find(".index-number").text(index + 1);
                 });
             }
-            
+
+            $(document).on("click", ".delete-row", function () {
+                $(this).closest(".item-row").remove();
+                updateIndexNumbers(); // Update index numbers after deleting a row
+            });
+
+
+
+
+
 
             // Function to add a new line with a unique index number
             $("#add-another-line").click(function () {

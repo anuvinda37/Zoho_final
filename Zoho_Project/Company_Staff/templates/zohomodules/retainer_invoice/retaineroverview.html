@@ -371,7 +371,7 @@
                 </div>     
                  <div class="col-md-2">
                    <div class="dropdown">
-                       <a class="btn text-center mt-2 btn-outline-warning btn-sm" id="sortbutton" data-bs-toggle="dropdown" role="button" style="margin-left: 15px; height: 34px;width:30px;">
+                       <a class="btn text-center mt-2 btn-outline-warning btn-sm" id="sortbutton" data-bs-toggle="dropdown" role="button" style=" height: 34px;width:30px;">
                            <i style="padding-top: 2px; padding-bottom:2px; " class="fas fa-sort m-1"></i>
                        </a>
                        
@@ -383,39 +383,30 @@
                        </div>
                    </div>
                </div>
-               
-             
-               <script>
-                   function applyFilter(currentFilter) {
-                               var rows = $("#table2 tbody tr");
-                               rows.show();
-                               if (currentFilter === "Active" || currentFilter === "inactive") {
-                                 rows.filter(":not(:contains('" + currentFilter + "'))").hide();
-                               }
-                             }
-               </script>
+               <div class="col-md-2" style="padding-left: 10px; margin-left:-14px;">
+                <div class="col-md-2 mt-2 mx-1" >
+                    <a class="btn text-center btn-outline-warning btn-sm" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" style=" height:34px;width:30px;">
+                        <i class="fa fa-filter" style="padding-top:2px; padding-bottom:1px; "></i>
+                    </a>
+            
+                    <div class="dropdown-menu m-1" style="background-color: #000;">
+                      <a class="dropdown-item" href="{% url 'retaineroverview' pk=invoice.pk %}">All</a>
+        <a class="dropdown-item" href="{% url 'retaineroverview' pk=invoice.pk %}?status=draft">Draft</a>
+        <a class="dropdown-item" href="{% url 'retaineroverview' pk=invoice.pk %}?status=sent">Sent</a>
+                    </div>
+                </div>
+                <div style="margin-left:45px; margin-top:-42px;">
+                <a class="btn btn btn-outline-warning  btn-sm text-right mt-2" style="height: 35px; padding-top: 10px; padding-left:10px; padding-right:10px;"  style="font-size: small;" href="{% url 'new_retainer'%}">
+                  <i class="fa fa-plus"></i>
+              </a>
+            </div>
+            </div>
                 
-               <div class="col-md-3" style="padding-left: 254PX;margin-top:-42px;">
-                   <a class="btn btn btn-outline-warning  btn-sm text-right mt-2" style="height: 35px; padding-top: 10px; padding-left:10px; padding-right:10px;"  style="font-size: small;" href="{% url 'new_retainer'%}">
-                       <i class="fa fa-plus"></i>
-                   </a>
+               <div class="col-md-" style="padding-left: 254PX;">
+                
                </div>
                
-               <div class="col-md-6">
-                <div class="col-md-3" style="padding-left: 10px;">
-                  <div class="col-md-2 mt-2 mx-1" style="margin-left:3px;">
-                      <a class="btn text-center btn-outline-warning btn-sm" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" style=" height:34px;width:30px;">
-                          <i class="fa fa-filter" style="padding-top:2px; padding-bottom:1px; "></i>
-                      </a>
               
-                      <div class="dropdown-menu m-1" style="background-color: #000;">
-                       <a class="dropdown-item" href="{% url 'retaineroverview' pk=invoice.pk %}">All</a>
-                       <a class="dropdown-item" href="{% url 'create_invoice_draft' %}">Draft</a>
-                       <a class="dropdown-item" href="{% url 'create_invoice_send' %}">Sent</a>
-                      </div>
-                  </div>
-              </div>
-               </div>
                
    
                </div>
@@ -2282,7 +2273,7 @@
                             {% for c in comments %}
                             <tr class="">
                                 <td class="text-center">{{forloop.counter }}</td>
-                                <td class="text-center">{{c.comments}}</td>
+                                <td class="text-center">{{c.comment}}</td>
                                 <td class="text-center"><a class="text-danger" href="{% url 'deleteRetainerInvoiceComment' c.id %}" onclick="return confirm('Are you sure you want to delete.?')"><i class="fa fa-trash" style="font-size: 1.1rem;"></i></a></td>
                             </tr>
                             {% endfor %}

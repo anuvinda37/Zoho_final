@@ -13710,7 +13710,15 @@ def retaineroverview(request, pk=None):
             if log_details.user_type == 'Staff':
                 dash_details = StaffDetails.objects.get(login_details=log_details)
                 item = Items.objects.filter(company=dash_details.company)
-                invoices = RetainerInvoice.objects.filter(logindetails=log_details).order_by('-id')
+                status = request.GET.get('status')  # Get the status parameter from the URL
+                
+                if status == 'draft':
+                    invoices = RetainerInvoice.objects.filter(logindetails=log_details, is_sent=False).order_by('-id')
+                elif status == 'sent':
+                    invoices = RetainerInvoice.objects.filter(logindetails=log_details, is_sent=True).order_by('-id')
+                else:
+                    invoices = RetainerInvoice.objects.filter(logindetails=log_details).order_by('-id')
+
                 allmodules = ZohoModules.objects.get(company=dash_details.company,status='New')
                 units = Unit.objects.filter(company=dash_details.company)
                 accounts = Chart_of_Accounts.objects.filter(company=dash_details.company)
@@ -13721,7 +13729,14 @@ def retaineroverview(request, pk=None):
                 allmodules = ZohoModules.objects.get(company=dash_details,status='New')
                 units = Unit.objects.filter(company=dash_details)
                 accounts = Chart_of_Accounts.objects.filter(company=dash_details)
-                invoices = RetainerInvoice.objects.filter(company=dash_details).order_by('-id')
+                status = request.GET.get('status')  # Get the status parameter from the URL
+                
+                if status == 'draft':
+                    invoices = RetainerInvoice.objects.filter(company=dash_details, is_sent=False).order_by('-id')
+                elif status == 'sent':
+                    invoices = RetainerInvoice.objects.filter(company=dash_details, is_sent=True).order_by('-id')
+                else:
+                    invoices = RetainerInvoice.objects.filter(company=dash_details).order_by('-id')
 
                 
             invoice = RetainerInvoice.objects.get(pk=pk)
@@ -13729,6 +13744,7 @@ def retaineroverview(request, pk=None):
             
             items = Retaineritems.objects.filter(retainer=invoice)
             payment_details = retainer_payment_details.objects.filter(retainer=invoice).first()  # Fetch payment details for the invoice
+            comments = RetainerInvoiceComment.objects.filter(retainer_invoice=invoice)
             # Accessing customer attributes
             customer_name = invoice.customer_name.customer_display_name  # Assuming customerName is the attribute for customer name
             
@@ -13751,7 +13767,7 @@ def retaineroverview(request, pk=None):
                     modified_by_details = entry.modified_by
                 if entry.created_by:
                     created_by_details = entry.created_by
-
+            
             
             context = {
                 'details': dash_details,
@@ -13771,7 +13787,9 @@ def retaineroverview(request, pk=None):
                 'retainer_id': retainer_id,  # Pass the retainer_id to the context
                 'created_by_details': created_by_details,
                 'modified_by_details': modified_by_details,
+                'comments': comments,
                 'invoices': invoices,
+                'status': status,  # Pass the status to the template
             }
             return render(request, 'zohomodules/retainer_invoice/retaineroverview.html', context)
         
@@ -14025,13 +14043,17 @@ def addRetainerInvoiceComment(request, retainer_id):  # Change 'id' to 'retainer
 
 
 
-def deleteRetainerInvoiceComment(request, id):
+def deleteRetainerInvoiceComment(request, comment_id):
     if 'login_id' in request.session:
-        # Assuming RetainerInvoiceComment is the model for retainer invoice comments
-        comment = RetainerInvoiceComment.objects.get(id=id)  # Use RetainerInvoiceComment instead of RetainerInvoiceComments
-        retainer_id = comment.retainer_invoice.id
-        comment.delete()
-        return redirect(viewRetainerInvoice, retainer_id)
+        try:
+            # Attempt to retrieve the comment using get_object_or_404
+            comment = get_object_or_404(RetainerInvoiceComment, id=comment_id)
+            retainer_id = comment.retainer_invoice.id
+            comment.delete()
+            return redirect(retaineroverview, retainer_id)
+        except:
+            # Handle the case where the comment does not exist
+            return HttpResponse("Retainer Invoice Comment does not exist.")
     else:
         return redirect('/')
 def convertRetainerInvoice(request, retainer_id):
@@ -14764,18 +14786,13 @@ def importRetainerInvoiceFromExcel(request):
                     messages.error(request, '`retainer_invoice` sheet entries missing required fields.! Please check.')
                     return redirect(retainer_list)
 
-            # Getting data from retainer invoice sheet and create retainer invoice
-            ws = wb['retainer_invoice']
-            for row in ws.iter_rows(min_row=2, values_only=True):
-                customer_name, customer_mailid, place_of_supply, retainer_invoice_number, references, retainer_invoice_date, advance, total_amount, customer_notes, terms_and_conditions, balance, paid, pay_method, acc_no, cheque_no, upi_id = row
-                
                 # Retrieve the Customer instance based on the customer_mailid
                 customer_instance, created = Customer.objects.get_or_create(customer_email=customer_mailid)
 
                 # Example logic for creating a Retainer invoice instance
                 retainer_invoice = RetainerInvoice(
                     company=com,
-                    logindetails=com.login_details if com else None,
+                    logindetails=log_details,
                     customer_name=customer_instance,
                     customer_mailid=customer_mailid,
                     customer_placesupply=place_of_supply,
@@ -14798,48 +14815,40 @@ def importRetainerInvoiceFromExcel(request):
 
                 # Example logic for creating Retaineritems instances
                 try:
-                    ws_items = wb[f"retainer_items_{retainer_invoice_number}"]
+                    ws_items = wb['retainer_items']
                 except Exception as e:
                     print(f'Retainer items sheet for {retainer_invoice_number} not found:', e)  # Debug print
                     messages.warning(request, f'Retainer items sheet for {retainer_invoice_number} not found.! Skipping this retainer invoice.')
                     continue
 
                 # Define the expected columns for retainer items
-                ret_item_columns = ['RETAINER INVOICE NUMBER','DESCRIPTION', 'AMOUNT', 'ITEM NAME', 'HSN', 'QUANTITY', 'RATE']
+                ret_item_columns = ['RETAINER INVOICE NUMBER','DESCRIPTION', 'AMOUNT', 'ITEM NAME','QUANTITY', 'RATE']
                 ret_item_sheet = [cell.value for cell in ws_items[1]]
                 print('Retainer items sheet columns:', ret_item_sheet)  # Debug print
                 if ret_item_sheet != ret_item_columns:
                     print('Invalid item sheet format:', ret_item_sheet)  # Debug print
                     messages.error(request, 'Retainer items sheet column names or order is not in the required format.! Please check.')
                     return redirect(importRetainerInvoiceFromExcel)
+                
                 for item_row in ws_items.iter_rows(min_row=2, values_only=True):
-                    retainer_invoice_number, description, amount, item_name, hsn, quantity, rate = item_row               
+                    retainer_invoice_number, description, amount, item_name, quantity, rate = item_row               
                     
                     # Example logic for creating a Retaineritems instance
                     retainer_item = Retaineritems(
                         company=com,
-                        logindetails=com.login_details,
+                        logindetails=log_details,
                         retainer=retainer_invoice,
                         description=description,
                         amount=amount,
                         itemname=item_name,
-                        hsn=hsn,
                         quantity=quantity,
                         rate=rate
                     )
                     retainer_item.save()
 
-                # Example logic for creating retInvoiceReference instance
-                ret_invoice_ref = retInvoiceReference(
-                    retainer=retainer_invoice,
-                    reference=references
-                )
-                ret_invoice_ref.save()
-
                 # Example logic for creating retainer_payment_details instance
                 if paid:
                     ret_payment = retainer_payment_details(
-                        user=None,  # Update this if needed
                         retainer=retainer_invoice,
                         payment_opt=pay_method,
                         acc_no=acc_no,
