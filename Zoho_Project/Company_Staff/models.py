@@ -825,7 +825,7 @@ class RetainerInvoice(models.Model):
     company = models.ForeignKey(CompanyDetails, on_delete=models.CASCADE,null=True,blank=True)
     logindetails = models.ForeignKey(LoginDetails, on_delete=models.CASCADE,null=True,blank=True)
     customer_name=models.ForeignKey(Customer,on_delete=models.CASCADE)
-    customer_name1=models.CharField(max_length=100,null=True,blank=True)
+   
     customer_mailid = models.CharField(max_length=100,null=True,blank=True)
     customer_placesupply=models.CharField(max_length=100,null=True,blank=True)
     retainer_invoice_number=models.CharField(max_length=255)
@@ -843,6 +843,9 @@ class RetainerInvoice(models.Model):
     modified_by = models.ForeignKey(LoginDetails, on_delete=models.SET_NULL, related_name='retainer_modified', null=True, blank=True)
     modified_at = models.DateTimeField(auto_now=True)
     document = models.FileField(upload_to='documents/', null=True, blank=True)
+    adjustment = models.IntegerField(null=True, blank=True)
+    paid = models.IntegerField(null=True, blank=True)
+
     def getNumFieldName(self):
         return 'retainer_invoice_number'
     
