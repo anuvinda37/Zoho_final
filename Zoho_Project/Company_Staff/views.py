@@ -13960,7 +13960,8 @@ def retainer_edit_page(request, retainer_id):
 
             retainer.customer_mailid = request.POST.get('cx_mail')
             retainer.retainer_invoice_number = request.POST.get('retainer-invoice-number')
-            retainer.references = request.POST.get('references')
+            retainer.refrences = request.POST.get('refrences')
+           
             retainer.retainer_invoice_date = request.POST.get('invoicedate')
             retainer.customer_notes = request.POST.get('customer_notes')
             retainer.terms_and_conditions = request.POST.get('terms')
@@ -14083,6 +14084,7 @@ def retainer_edit_page(request, retainer_id):
                 'items': items,
                 'customers': customers,
                 'allmodules': allmodules,
+                'refrences': retainer.refrences,
             }
 
             return render(request, 'zohomodules/retainer_invoice/retainer_invoice_edit.html', context)
